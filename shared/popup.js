@@ -2,8 +2,83 @@
  * Shared popup functionality for both Chrome and Firefox extensions
  */
 
-import { getAllSettings, setStorageValue, sendMessageToBackground } from './storage-utils.js';
-import { VALIDATION } from './constants.js';
+// Storage utilities (inline for compatibility)
+const STORAGE_KEYS = {
+  FIGMA_TOKEN: 'figmaToken',
+  SPEC_HEADING: 'specHeading',
+  DIFF_APPROVAL_ENABLED: 'diffApprovalEnabled',
+};
+
+const DEFAULT_CONFIG = {
+  SPEC_HEADING: 'Design Specs',
+};
+
+const VALIDATION = {
+  FIGMA_TOKEN: /^figd?_[A-Za-z0-9_-]+$/,
+  HEADING_TEXT: /^[a-zA-Z0-9\s\-_]+$/,
+};
+
+// Detect browser API
+const browserAPI = (() => {
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    return chrome;
+  } else if (typeof browser !== 'undefined' && browser.storage) {
+    return browser;
+  } else {
+    throw new Error('No supported browser storage API found');
+  }
+})();
+
+// Storage utilities
+async function getStorageValue(keys) {
+  return new Promise((resolve, reject) => {
+    browserAPI.storage.sync.get(keys, (result) => {
+      if (browserAPI.runtime.lastError) {
+        reject(new Error(browserAPI.runtime.lastError.message));
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+async function setStorageValue(items) {
+  return new Promise((resolve, reject) => {
+    browserAPI.storage.sync.set(items, () => {
+      if (browserAPI.runtime.lastError) {
+        reject(new Error(browserAPI.runtime.lastError.message));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+async function getAllSettings() {
+  const result = await getStorageValue([
+    STORAGE_KEYS.FIGMA_TOKEN,
+    STORAGE_KEYS.SPEC_HEADING,
+    STORAGE_KEYS.DIFF_APPROVAL_ENABLED
+  ]);
+  
+  return {
+    figmaToken: result[STORAGE_KEYS.FIGMA_TOKEN] || null,
+    specHeading: result[STORAGE_KEYS.SPEC_HEADING] || DEFAULT_CONFIG.SPEC_HEADING,
+    diffApprovalEnabled: result[STORAGE_KEYS.DIFF_APPROVAL_ENABLED] || false,
+  };
+}
+
+function sendMessageToBackground(message) {
+  return new Promise((resolve, reject) => {
+    browserAPI.runtime.sendMessage(message, (response) => {
+      if (browserAPI.runtime.lastError) {
+        reject(new Error(browserAPI.runtime.lastError.message));
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
 
 class PopupManager {
   constructor() {
