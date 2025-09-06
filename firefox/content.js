@@ -11,44 +11,42 @@ class FigmaPRProcessor {
   }
 
   async init() {
-    // Get Figma token from storage - Firefox compatibility
-    const result = await browser.storage.sync.get(["figmaToken"]);
+    // Get Figma token from storage
+    const result = await chrome.storage.sync.get(['figmaToken']);
     this.figmaToken = result.figmaToken;
 
     if (!this.figmaToken) {
-      console.log(
-        "Figma PR Extension: No token found. Please configure in extension popup."
-      );
+      console.log('Figma PR Extension: No token found. Please configure in extension popup.');
+      return;
     }
 
-    // Always add the button - we'll check token when it's clicked
     this.addProcessButton();
     this.observePageChanges();
   }
 
   addProcessButton() {
     // Remove existing button first
-    const existingButton = document.querySelector("#figma-process-btn");
+    const existingButton = document.querySelector('#figma-process-btn');
     if (existingButton) {
-      console.log("Removing existing button");
+      console.log('Removing existing button');
       existingButton.remove();
     }
 
     // Only add button if we're in PR description edit mode and Write tab is selected
-    const prDescriptionTextarea = document.querySelector("#pull_request_body") ||
+    const prDescriptionTextarea = document.querySelector('#pull_request_body') ||
                                  document.querySelector('textarea[name="pull_request[body]"]');
     
     // Debug: Check tab states
-    const writeTab = document.querySelector(".write-tab.selected") ||
+    const writeTab = document.querySelector('.write-tab.selected') ||
                     document.querySelector('.js-write-tab[aria-selected="true"]');
-    const previewTab = document.querySelector(".preview-tab.selected") ||
+    const previewTab = document.querySelector('.preview-tab.selected') ||
                       document.querySelector('.js-preview-tab[aria-selected="true"]');
     
     // Enhanced tab detection - look for any write/preview tabs and their states
     const allWriteTabs = document.querySelectorAll('.write-tab, .js-write-tab');
     const allPreviewTabs = document.querySelectorAll('.preview-tab, .js-preview-tab');
     
-    console.log("Tab debug:", {
+    console.log('Tab debug:', {
       writeTab: writeTab,
       previewTab: previewTab,
       allWriteTabs: allWriteTabs.length,
@@ -73,35 +71,35 @@ class FigmaPRProcessor {
       tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
     );
     
-    console.log("Tab states:", { isWriteTabActive, isPreviewTabActive });
+    console.log('Tab states:', { isWriteTabActive, isPreviewTabActive });
     
     // Must have PR description textarea and Write tab active (not Preview)
     // If Preview tab is active, always hide button regardless of Write tab state
     if (!prDescriptionTextarea || !prDescriptionTextarea.offsetParent || isPreviewTabActive || !isWriteTabActive) {
-      console.log("Button hidden - textarea:", !!prDescriptionTextarea, "visible:", !!(prDescriptionTextarea?.offsetParent), "writeActive:", isWriteTabActive, "previewActive:", isPreviewTabActive);
+      console.log('Button hidden - textarea:', !!prDescriptionTextarea, 'visible:', !!(prDescriptionTextarea?.offsetParent), 'writeActive:', isWriteTabActive, 'previewActive:', isPreviewTabActive);
       return;
     }
 
     // Create process button
-    console.log("Creating new button");
-    const button = document.createElement("button");
-    button.id = "figma-process-btn";
-    button.className = "btn btn-sm btn-outline";
-    button.innerHTML = "🎨 Process Figma Links";
-    button.style.marginLeft = "8px";
+    console.log('Creating new button');
+    const button = document.createElement('button');
+    button.id = 'figma-process-btn';
+    button.className = 'btn btn-sm btn-outline';
+    button.innerHTML = '🎨 Process Figma Links';
+    button.style.marginLeft = '8px';
 
     // Try edit mode specific locations first
     const editModeLocations = [
-      ".timeline-comment-actions", // Edit mode actions
-      ".edit-comment-hide .form-actions", // Edit mode form actions
-      ".comment-form-actions", // Comment form actions
+      '.timeline-comment-actions', // Edit mode actions
+      '.edit-comment-hide .form-actions', // Edit mode form actions
+      '.comment-form-actions', // Comment form actions
     ];
 
     // Try general form locations
     const generalLocations = [
-      ".form-actions", // General form actions
-      ".new-pr-form .form-actions", // New PR form
-      ".js-write-bucket", // Write tab area
+      '.form-actions', // General form actions
+      '.new-pr-form .form-actions', // New PR form
+      '.js-write-bucket', // Write tab area
     ];
 
     let buttonAdded = false;
@@ -111,9 +109,9 @@ class FigmaPRProcessor {
       const container = document.querySelector(selector);
       if (container && !buttonAdded) {
         container.appendChild(button);
-        button.addEventListener("click", () => this.processCurrentPR());
+        button.addEventListener('click', () => this.processCurrentPR());
         buttonAdded = true;
-        console.log("Figma PR Extension: Button added to edit mode location", selector);
+        console.log('Figma PR Extension: Button added to edit mode location', selector);
         break;
       }
     }
@@ -124,9 +122,9 @@ class FigmaPRProcessor {
         const container = document.querySelector(selector);
         if (container && !buttonAdded) {
           container.appendChild(button);
-          button.addEventListener("click", () => this.processCurrentPR());
+          button.addEventListener('click', () => this.processCurrentPR());
           buttonAdded = true;
-          console.log("Figma PR Extension: Button added to general location", selector);
+          console.log('Figma PR Extension: Button added to general location', selector);
           break;
         }
       }
@@ -134,11 +132,11 @@ class FigmaPRProcessor {
 
     // Last resort: add to form if textarea is present
     if (!buttonAdded && textarea) {
-      const form = textarea.closest("form");
+      const form = textarea.closest('form');
       if (form) {
         form.appendChild(button);
-        button.addEventListener("click", () => this.processCurrentPR());
-        console.log("Figma PR Extension: Button added to form as fallback");
+        button.addEventListener('click', () => this.processCurrentPR());
+        console.log('Figma PR Extension: Button added to form as fallback');
       }
     }
   }
@@ -152,7 +150,7 @@ class FigmaPRProcessor {
       let shouldUpdateButton = false;
       
       mutations.forEach((mutation) => {
-        if (mutation.type === "childList") {
+        if (mutation.type === 'childList') {
           // Check if this is a relevant change (not our own button addition)
           const addedNodes = Array.from(mutation.addedNodes);
           const removedNodes = Array.from(mutation.removedNodes);
@@ -203,7 +201,7 @@ class FigmaPRProcessor {
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true,
+      subtree: true
     });
   }
 
@@ -232,67 +230,84 @@ class FigmaPRProcessor {
 
   async processCurrentPR() {
     if (this.isProcessing) return;
-
-    // Check token first
-    const result = await browser.storage.sync.get(["figmaToken"]);
-    this.figmaToken = result.figmaToken;
-
-    if (!this.figmaToken) {
-      this.showError(
-        "Please configure your Figma API token in the extension popup first."
-      );
-      return;
-    }
-
+    
     this.isProcessing = true;
-    const button = document.querySelector("#figma-process-btn");
+    const button = document.querySelector('#figma-process-btn');
     if (button) {
       button.disabled = true;
-      button.innerHTML = "⏳ Processing...";
+      button.innerHTML = '⏳ Processing...';
     }
 
     try {
-      // Get PR description textarea (not comment field)
-      const textarea = document.querySelector("#pull_request_body") ||
-                      document.querySelector('textarea[name="pull_request[body]"]');
-
-      if (!textarea) {
-        throw new Error("Could not find PR description textarea");
+      // Get settings first
+      const settings = await this.getSettings();
+      
+      if (!settings.figmaToken) {
+        throw new Error('Please configure your Figma API token in the extension popup first.');
       }
 
-      console.log("Figma PR Extension: Found textarea for PR body", textarea);
+      // Get PR description textarea (not comment field)
+      const textarea = document.querySelector('#pull_request_body') ||
+                      document.querySelector('textarea[name="pull_request[body]"]');
+      
+      if (!textarea) {
+        throw new Error('Could not find PR description textarea');
+      }
 
       const originalText = textarea.value;
-      const processedText = await this.processFigmaLinks(originalText);
-
-      console.log("Figma PR Extension: Processing complete", processedText);
-
-      if (processedText !== originalText) {
-        textarea.value = processedText;
-
-        // Trigger input event to notify GitHub of the change
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-
-        this.showSuccess("Figma links processed successfully!");
-      } else {
-        this.showInfo("No Figma links found to process.");
+      const processedText = await this.processFigmaLinks(originalText, settings);
+      
+      if (processedText === originalText) {
+        this.showInfo('No Figma links found to process.');
+        return;
       }
+
+      // Handle diff approval if enabled
+      if (settings.diffApprovalEnabled) {
+        this.showDiffPreview(originalText, processedText, settings, (approvedText) => {
+          textarea.value = approvedText;
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          this.showSuccess('Changes applied successfully!');
+        });
+      } else {
+        // Apply changes directly
+        textarea.value = processedText;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        this.showSuccess('Figma links processed successfully!');
+      }
+      
     } catch (error) {
-      console.error("Figma PR Extension error:", error);
+      console.error('Figma PR Extension error:', error);
       this.showError(`Error: ${error.message}`);
     } finally {
       this.isProcessing = false;
       if (button) {
         button.disabled = false;
-        button.innerHTML = "🎨 Process Figma Links";
+        button.innerHTML = '🎨 Process Figma Links';
       }
     }
   }
 
-  async processFigmaLinks(text) {
+  async getSettings() {
+    return new Promise((resolve, reject) => {
+      browser.storage.sync.get(['figmaToken', 'specHeading', 'diffApprovalEnabled'], (result) => {
+        if (browser.runtime.lastError) {
+          reject(new Error(browser.runtime.lastError.message));
+        } else {
+          resolve({
+            figmaToken: result.figmaToken || null,
+            specHeading: result.specHeading || 'Design Specs',
+            diffApprovalEnabled: result.diffApprovalEnabled || false,
+          });
+        }
+      });
+    });
+  }
+
+  async processFigmaLinks(text, settings) {
     // Find all Figma links
     const figmaLinks = this.findFigmaLinks(text);
-
+    
     if (figmaLinks.length === 0) {
       return text;
     }
@@ -316,7 +331,7 @@ class FigmaPRProcessor {
         if (parsed.versionId) {
           version = createVersionFromId(parsed.versionId);
         } else {
-          version = await fetchLatestVersion(parsed.fileId, this.figmaToken);
+          version = await fetchLatestVersion(parsed.fileId, settings.figmaToken);
         }
 
         const nodeVersionKey = `${parsed.fileId}:${parsed.nodeId}:${version.id}`;
@@ -359,21 +374,13 @@ class FigmaPRProcessor {
         nodeVersionToSpecNumber.set(nodeVersionKey, specCounter);
 
         // Get image URL
-        const imageUrl = await fetchNodeImageUrl(
-          parsed.fileId,
-          parsed.nodeId,
-          this.figmaToken
-        );
-
+        const imageUrl = await fetchNodeImageUrl(parsed.fileId, parsed.nodeId, settings.figmaToken);
+        
         // Create spec
         const specId = `design-spec-${specCounter}`;
-        const cleanUrl = createCleanFigmaUrl(
-          parsed.fileId,
-          parsed.nodeId,
-          version.id
-        );
+        const cleanUrl = createCleanFigmaUrl(parsed.fileId, parsed.nodeId, version.id);
         const expirationDate = calculateImageExpirationDate();
-
+        
         const designSpec = createDesignSpecSnippet(
           specCounter,
           specId,
@@ -396,6 +403,7 @@ class FigmaPRProcessor {
 
         processedText = processedText.replace(link.fullMatch, referenceText);
         specCounter++;
+
       } catch (error) {
         console.error(`Error processing link ${link.url}:`, error);
         this.showError(`Error processing link: ${error.message}`);
@@ -404,7 +412,7 @@ class FigmaPRProcessor {
 
     // Add design specs section
     if (designSpecs.length > 0) {
-      processedText = this.addDesignSpecsSection(processedText, designSpecs);
+      processedText = this.addDesignSpecsSection(processedText, designSpecs, settings.specHeading);
     }
 
     return processedText;
@@ -420,10 +428,9 @@ class FigmaPRProcessor {
 
     // Regex for standalone Figma URLs
     const standaloneRegex = /https:\/\/www\.figma\.com\/design\/[^)\s]+/g;
-
+    
     // Regex for markdown links with Figma URLs
-    const markdownRegex =
-      /\[([^\]]+)\]\((https:\/\/www\.figma\.com\/design\/[^)]+)\)/g;
+    const markdownRegex = /\[([^\]]+)\]\((https:\/\/www\.figma\.com\/design\/[^)]+)\)/g;
 
     // Find markdown links first
     let match;
@@ -432,18 +439,18 @@ class FigmaPRProcessor {
         url: match[2],
         fullMatch: match[0],
         isMarkdownLink: true,
-        linkText: match[1],
+        linkText: match[1]
       });
     }
 
     // Find standalone URLs (that aren't part of markdown links)
-    const textWithoutMarkdown = cleanText.replace(markdownRegex, "");
+    const textWithoutMarkdown = cleanText.replace(markdownRegex, '');
     while ((match = standaloneRegex.exec(textWithoutMarkdown)) !== null) {
       links.push({
         url: match[0],
         fullMatch: match[0],
         isMarkdownLink: false,
-        linkText: null,
+        linkText: null
       });
     }
 
@@ -454,14 +461,14 @@ class FigmaPRProcessor {
     const specRegex = /<!-- START_SPEC_(\d+) -->/g;
     let maxNumber = 0;
     let match;
-
+    
     while ((match = specRegex.exec(text)) !== null) {
       const number = parseInt(match[1], 10);
       if (number > maxNumber) {
         maxNumber = number;
       }
     }
-
+    
     return maxNumber + 1;
   }
 
@@ -482,58 +489,51 @@ class FigmaPRProcessor {
     return existingSpecs;
   }
 
-  addDesignSpecsSection(text, designSpecs) {
-    // Check if Design Specs section exists
-    const designSpecsRegex = /^#{1,6}\s*design\s+specs\s*$/im;
+  addDesignSpecsSection(text, designSpecs, customHeading = 'Design Specs') {
+    // Check if custom heading section exists
+    const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const designSpecsRegex = new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
     const match = text.match(designSpecsRegex);
-
+    
+    const endMarker = `<!-- END_${customHeading.toUpperCase().replace(/\s+/g, '_')}_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
+    
     if (match) {
       // Find end of existing section
-      const endMarker = getDesignSpecsEndMarker();
       const endIndex = text.indexOf(endMarker);
-
+      
       if (endIndex > -1) {
         // Insert before end marker
         const beforeEnd = text.substring(0, endIndex);
         const afterEnd = text.substring(endIndex);
-        return beforeEnd + designSpecs.join("\n") + "\n" + afterEnd;
+        return beforeEnd + designSpecs.join('\n') + '\n' + afterEnd;
       } else {
         // Add end marker and specs after the section
         const sectionIndex = text.indexOf(match[0]) + match[0].length;
         const before = text.substring(0, sectionIndex);
         const after = text.substring(sectionIndex);
-        return (
-          before + "\n\n" + designSpecs.join("\n") + "\n\n" + endMarker + after
-        );
+        return before + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + after;
       }
     } else {
       // Create new section at the end
-      const endMarker = getDesignSpecsEndMarker();
-      return (
-        text +
-        "\n\n## Design Specs\n\n" +
-        designSpecs.join("\n") +
-        "\n\n" +
-        endMarker
-      );
+      return text + `\n\n## ${customHeading}\n\n` + designSpecs.join('\n') + '\n\n' + endMarker;
     }
   }
 
   showSuccess(message) {
-    this.showNotification(message, "success");
+    this.showNotification(message, 'success');
   }
 
   showError(message) {
-    this.showNotification(message, "error");
+    this.showNotification(message, 'error');
   }
 
   showInfo(message) {
-    this.showNotification(message, "info");
+    this.showNotification(message, 'info');
   }
 
   showNotification(message, type) {
     // Create notification element
-    const notification = document.createElement("div");
+    const notification = document.createElement('div');
     notification.style.cssText = `
       position: fixed;
       top: 20px;
@@ -546,24 +546,202 @@ class FigmaPRProcessor {
       max-width: 400px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     `;
-
+    
     const colors = {
-      success: "#28a745",
-      error: "#dc3545",
-      info: "#17a2b8",
+      success: '#28a745',
+      error: '#dc3545',
+      info: '#17a2b8'
     };
-
+    
     notification.style.backgroundColor = colors[type] || colors.info;
     notification.textContent = message;
-
+    
     document.body.appendChild(notification);
-
+    
     // Auto remove after 5 seconds
     setTimeout(() => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
       }
     }, 5000);
+  }
+
+  showDiffPreview(originalText, newText, settings, onApprove) {
+    const modal = this.createDiffPreviewModal(originalText, newText, onApprove);
+    document.body.appendChild(modal);
+  }
+
+  createDiffPreviewModal(originalText, newText, onApprove) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
+    
+    // Create header
+    const header = document.createElement('div');
+    header.style.cssText = `
+      padding: 16px 24px;
+      border-bottom: 1px solid #e1e4e8;
+      background: #f6f8fa;
+    `;
+    header.innerHTML = '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+    
+    // Create content area
+    const content = document.createElement('div');
+    content.style.cssText = `
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+    `;
+    
+    // Create diff content
+    const diffContent = document.createElement('pre');
+    diffContent.style.cssText = `
+      background: #f8f8f8;
+      padding: 16px;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 400px;
+      white-space: pre-wrap;
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    `;
+    
+    diffContent.textContent = `Original length: ${originalText.length} characters\nNew length: ${newText.length} characters\n\n--- Preview of changes ---\n${newText}`;
+    
+    content.appendChild(diffContent);
+    
+    // Create footer with buttons
+    const footer = document.createElement('div');
+    footer.style.cssText = `
+      padding: 16px 24px;
+      border-top: 1px solid #e1e4e8;
+      background: #f6f8fa;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    `;
+    
+    // Create buttons
+    const copySpecsBtn = document.createElement('button');
+    copySpecsBtn.textContent = 'Copy Figma Section';
+    copySpecsBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      margin-right: auto;
+    `;
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    `;
+    
+    const copyFullBtn = document.createElement('button');
+    copyFullBtn.textContent = 'Copy Full Content';
+    copyFullBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    `;
+    
+    const approveBtn = document.createElement('button');
+    approveBtn.textContent = 'Approve & Apply';
+    approveBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #1f883d;
+      border-radius: 6px;
+      background: #1f883d;
+      color: white;
+      cursor: pointer;
+    `;
+    
+    // Add event listeners
+    copySpecsBtn.addEventListener('click', () => {
+      // Extract specs section using custom heading pattern
+      let specsSection = null;
+      const headingPatterns = ['Design Specs', 'Screenshots', 'Design Pics'];
+      
+      for (const heading of headingPatterns) {
+        const specStart = newText.indexOf(`## ${heading}`);
+        const endMarker = newText.indexOf(`<!-- END_${heading.toUpperCase().replace(/\s+/g, '_')}_SPECS`);
+        
+        if (specStart > -1 && endMarker > -1) {
+          const endPos = endMarker + newText.substring(endMarker).indexOf('-->') + 3;
+          specsSection = newText.substring(specStart, endPos);
+          break;
+        }
+      }
+      
+      if (specsSection) {
+        navigator.clipboard.writeText(specsSection);
+        this.showSuccess('Figma section copied to clipboard');
+      } else {
+        this.showError('No specs section found');
+      }
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      this.showInfo('Changes cancelled');
+    });
+    
+    copyFullBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(newText);
+      this.showSuccess('Full content copied to clipboard');
+    });
+    
+    approveBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      onApprove(newText);
+    });
+    
+    // Assemble modal
+    footer.appendChild(copySpecsBtn);
+    footer.appendChild(cancelBtn);
+    footer.appendChild(copyFullBtn);
+    footer.appendChild(approveBtn);
+    
+    modal.appendChild(header);
+    modal.appendChild(content);
+    modal.appendChild(footer);
+    
+    overlay.appendChild(modal);
+    
+    return overlay;
   }
 }
 
@@ -575,12 +753,12 @@ function parseFigmaUrl(url) {
   const fileIdMatch = url.match(/\/design\/([^/]+)\//);
   const nodeIdMatch = url.match(/node-id=([^&\s)]+)/);
   const versionMatch = url.match(/version-id=([^&\s)]+)/);
-
+  
   if (fileIdMatch && nodeIdMatch) {
     return {
       fileId: fileIdMatch[1],
       nodeId: nodeIdMatch[1].replace("-", ":"),
-      versionId: versionMatch ? versionMatch[1] : null,
+      versionId: versionMatch ? versionMatch[1] : null
     };
   }
   return null;
@@ -627,15 +805,7 @@ function createCleanFigmaUrl(fileId, nodeId, versionId) {
   return `https://www.figma.com/design/${fileId}/?node-id=${dashNodeId}&version-id=${versionId}&m=dev`;
 }
 
-function createDesignSpecSnippet(
-  specNumber,
-  specId,
-  attachmentUrl,
-  cleanUrl,
-  versionId,
-  snapshotTimestamp,
-  expirationString
-) {
+function createDesignSpecSnippet(specNumber, specId, attachmentUrl, cleanUrl, versionId, snapshotTimestamp, expirationString) {
   return `
 <!-- START_SPEC_${specNumber} -->
 
@@ -685,8 +855,8 @@ function getDesignSpecsEndMarker() {
 }
 
 // Initialize when page loads
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => new FigmaPRProcessor());
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => new FigmaPRProcessor());
 } else {
   new FigmaPRProcessor();
 }

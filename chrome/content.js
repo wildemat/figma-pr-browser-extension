@@ -239,6 +239,13 @@ class FigmaPRProcessor {
     }
 
     try {
+      // Get settings first
+      const settings = await this.getSettings();
+      
+      if (!settings.figmaToken) {
+        throw new Error('Please configure your Figma API token in the extension popup first.');
+      }
+
       // Get PR description textarea (not comment field)
       const textarea = document.querySelector('#pull_request_body') ||
                       document.querySelector('textarea[name="pull_request[body]"]');
@@ -248,18 +255,27 @@ class FigmaPRProcessor {
       }
 
       const originalText = textarea.value;
-      const processedText = await this.processFigmaLinks(originalText);
+      const processedText = await this.processFigmaLinks(originalText, settings);
       
-      if (processedText !== originalText) {
-        textarea.value = processedText;
-        
-        // Trigger input event to notify GitHub of the change
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        this.showSuccess('Figma links processed successfully!');
-      } else {
+      if (processedText === originalText) {
         this.showInfo('No Figma links found to process.');
+        return;
       }
+
+      // Handle diff approval if enabled
+      if (settings.diffApprovalEnabled) {
+        this.showDiffPreview(originalText, processedText, settings, (approvedText) => {
+          textarea.value = approvedText;
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          this.showSuccess('Changes applied successfully!');
+        });
+      } else {
+        // Apply changes directly
+        textarea.value = processedText;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        this.showSuccess('Figma links processed successfully!');
+      }
+      
     } catch (error) {
       console.error('Figma PR Extension error:', error);
       this.showError(`Error: ${error.message}`);
@@ -272,7 +288,23 @@ class FigmaPRProcessor {
     }
   }
 
-  async processFigmaLinks(text) {
+  async getSettings() {
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get(['figmaToken', 'specHeading', 'diffApprovalEnabled'], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve({
+            figmaToken: result.figmaToken || null,
+            specHeading: result.specHeading || 'Design Specs',
+            diffApprovalEnabled: result.diffApprovalEnabled || false,
+          });
+        }
+      });
+    });
+  }
+
+  async processFigmaLinks(text, settings) {
     // Find all Figma links
     const figmaLinks = this.findFigmaLinks(text);
     
@@ -299,7 +331,7 @@ class FigmaPRProcessor {
         if (parsed.versionId) {
           version = createVersionFromId(parsed.versionId);
         } else {
-          version = await fetchLatestVersion(parsed.fileId, this.figmaToken);
+          version = await fetchLatestVersion(parsed.fileId, settings.figmaToken);
         }
 
         const nodeVersionKey = `${parsed.fileId}:${parsed.nodeId}:${version.id}`;
@@ -342,7 +374,7 @@ class FigmaPRProcessor {
         nodeVersionToSpecNumber.set(nodeVersionKey, specCounter);
 
         // Get image URL
-        const imageUrl = await fetchNodeImageUrl(parsed.fileId, parsed.nodeId, this.figmaToken);
+        const imageUrl = await fetchNodeImageUrl(parsed.fileId, parsed.nodeId, settings.figmaToken);
         
         // Create spec
         const specId = `design-spec-${specCounter}`;
@@ -380,7 +412,7 @@ class FigmaPRProcessor {
 
     // Add design specs section
     if (designSpecs.length > 0) {
-      processedText = this.addDesignSpecsSection(processedText, designSpecs);
+      processedText = this.addDesignSpecsSection(processedText, designSpecs, settings.specHeading);
     }
 
     return processedText;
@@ -457,14 +489,16 @@ class FigmaPRProcessor {
     return existingSpecs;
   }
 
-  addDesignSpecsSection(text, designSpecs) {
-    // Check if Design Specs section exists
-    const designSpecsRegex = /^#{1,6}\s*design\s+specs\s*$/im;
+  addDesignSpecsSection(text, designSpecs, customHeading = 'Design Specs') {
+    // Check if custom heading section exists
+    const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const designSpecsRegex = new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
     const match = text.match(designSpecsRegex);
+    
+    const endMarker = `<!-- END_${customHeading.toUpperCase().replace(/\s+/g, '_')}_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
     
     if (match) {
       // Find end of existing section
-      const endMarker = getDesignSpecsEndMarker();
       const endIndex = text.indexOf(endMarker);
       
       if (endIndex > -1) {
@@ -481,8 +515,7 @@ class FigmaPRProcessor {
       }
     } else {
       // Create new section at the end
-      const endMarker = getDesignSpecsEndMarker();
-      return text + '\n\n## Design Specs\n\n' + designSpecs.join('\n') + '\n\n' + endMarker;
+      return text + `\n\n## ${customHeading}\n\n` + designSpecs.join('\n') + '\n\n' + endMarker;
     }
   }
 
@@ -531,6 +564,184 @@ class FigmaPRProcessor {
         notification.parentNode.removeChild(notification);
       }
     }, 5000);
+  }
+
+  showDiffPreview(originalText, newText, settings, onApprove) {
+    const modal = this.createDiffPreviewModal(originalText, newText, onApprove);
+    document.body.appendChild(modal);
+  }
+
+  createDiffPreviewModal(originalText, newText, onApprove) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
+    
+    // Create header
+    const header = document.createElement('div');
+    header.style.cssText = `
+      padding: 16px 24px;
+      border-bottom: 1px solid #e1e4e8;
+      background: #f6f8fa;
+    `;
+    header.innerHTML = '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+    
+    // Create content area
+    const content = document.createElement('div');
+    content.style.cssText = `
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+    `;
+    
+    // Create diff content
+    const diffContent = document.createElement('pre');
+    diffContent.style.cssText = `
+      background: #f8f8f8;
+      padding: 16px;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 400px;
+      white-space: pre-wrap;
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+    `;
+    
+    diffContent.textContent = `Original length: ${originalText.length} characters\nNew length: ${newText.length} characters\n\n--- Preview of changes ---\n${newText}`;
+    
+    content.appendChild(diffContent);
+    
+    // Create footer with buttons
+    const footer = document.createElement('div');
+    footer.style.cssText = `
+      padding: 16px 24px;
+      border-top: 1px solid #e1e4e8;
+      background: #f6f8fa;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    `;
+    
+    // Create buttons
+    const copySpecsBtn = document.createElement('button');
+    copySpecsBtn.textContent = 'Copy Figma Section';
+    copySpecsBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      margin-right: auto;
+    `;
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    `;
+    
+    const copyFullBtn = document.createElement('button');
+    copyFullBtn.textContent = 'Copy Full Content';
+    copyFullBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    `;
+    
+    const approveBtn = document.createElement('button');
+    approveBtn.textContent = 'Approve & Apply';
+    approveBtn.style.cssText = `
+      padding: 8px 16px;
+      border: 1px solid #1f883d;
+      border-radius: 6px;
+      background: #1f883d;
+      color: white;
+      cursor: pointer;
+    `;
+    
+    // Add event listeners
+    copySpecsBtn.addEventListener('click', () => {
+      // Extract specs section using custom heading pattern
+      let specsSection = null;
+      const headingPatterns = ['Design Specs', 'Screenshots', 'Design Pics'];
+      
+      for (const heading of headingPatterns) {
+        const specStart = newText.indexOf(`## ${heading}`);
+        const endMarker = newText.indexOf(`<!-- END_${heading.toUpperCase().replace(/\s+/g, '_')}_SPECS`);
+        
+        if (specStart > -1 && endMarker > -1) {
+          const endPos = endMarker + newText.substring(endMarker).indexOf('-->') + 3;
+          specsSection = newText.substring(specStart, endPos);
+          break;
+        }
+      }
+      
+      if (specsSection) {
+        navigator.clipboard.writeText(specsSection);
+        this.showSuccess('Figma section copied to clipboard');
+      } else {
+        this.showError('No specs section found');
+      }
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      this.showInfo('Changes cancelled');
+    });
+    
+    copyFullBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(newText);
+      this.showSuccess('Full content copied to clipboard');
+    });
+    
+    approveBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      onApprove(newText);
+    });
+    
+    // Assemble modal
+    footer.appendChild(copySpecsBtn);
+    footer.appendChild(cancelBtn);
+    footer.appendChild(copyFullBtn);
+    footer.appendChild(approveBtn);
+    
+    modal.appendChild(header);
+    modal.appendChild(content);
+    modal.appendChild(footer);
+    
+    overlay.appendChild(modal);
+    
+    return overlay;
   }
 }
 
