@@ -490,32 +490,39 @@ class FigmaPRProcessor {
   }
 
   addDesignSpecsSection(text, designSpecs, customHeading = 'Design Specs') {
-    // Check if custom heading section exists
-    const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const designSpecsRegex = new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
-    const match = text.match(designSpecsRegex);
+    const startMarker = `<!-- START_FIGMA_SECTION -->`;
+    const endMarker = `<!-- END_FIGMA_SECTION - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
     
-    const endMarker = `<!-- END_${customHeading.toUpperCase().replace(/\s+/g, '_')}_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
+    // First, check if START_FIGMA_SECTION marker exists
+    const startMarkerIndex = text.indexOf(startMarker);
+    const endMarkerIndex = text.indexOf(endMarker);
     
-    if (match) {
-      // Find end of existing section
-      const endIndex = text.indexOf(endMarker);
-      
-      if (endIndex > -1) {
-        // Insert before end marker
-        const beforeEnd = text.substring(0, endIndex);
-        const afterEnd = text.substring(endIndex);
-        return beforeEnd + designSpecs.join('\n') + '\n' + afterEnd;
-      } else {
-        // Add end marker and specs after the section
-        const sectionIndex = text.indexOf(match[0]) + match[0].length;
-        const before = text.substring(0, sectionIndex);
-        const after = text.substring(sectionIndex);
-        return before + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + after;
-      }
+    if (startMarkerIndex > -1 && endMarkerIndex > startMarkerIndex) {
+      // Markers exist, insert before end marker
+      const beforeEnd = text.substring(0, endMarkerIndex);
+      const afterEnd = text.substring(endMarkerIndex);
+      return beforeEnd + designSpecs.join('\n') + '\n' + afterEnd;
+    } else if (startMarkerIndex > -1) {
+      // Start marker exists but no end marker, add end marker
+      const afterStart = text.substring(startMarkerIndex);
+      const beforeStart = text.substring(0, startMarkerIndex);
+      return beforeStart + startMarker + '\n\n## ' + customHeading + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + afterStart.substring(startMarker.length);
     } else {
-      // Create new section at the end
-      return text + `\n\n## ${customHeading}\n\n` + designSpecs.join('\n') + '\n\n' + endMarker;
+      // No markers exist, check if custom heading section exists
+      const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const designSpecsRegex = new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
+      const headingMatch = text.match(designSpecsRegex);
+      
+      if (headingMatch) {
+        // Heading exists, add start marker before it
+        const headingIndex = text.indexOf(headingMatch[0]);
+        const before = text.substring(0, headingIndex);
+        const after = text.substring(headingIndex);
+        return before + startMarker + '\n' + after.substring(0, after.indexOf(headingMatch[0]) + headingMatch[0].length) + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + after.substring(after.indexOf(headingMatch[0]) + headingMatch[0].length);
+      } else {
+        // Create new section with markers at the end
+        return text + `\n\n${startMarker}\n## ${customHeading}\n\n` + designSpecs.join('\n') + '\n\n' + endMarker;
+      }
     }
   }
 
@@ -592,8 +599,8 @@ class FigmaPRProcessor {
     modal.style.cssText = `
       background: white;
       border-radius: 8px;
-      max-width: 90vw;
-      max-height: 90vh;
+      width: 95vw;
+      height: 90vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -609,33 +616,291 @@ class FigmaPRProcessor {
     `;
     header.innerHTML = '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
     
-    // Create content area
-    const content = document.createElement('div');
-    content.style.cssText = `
+    // Create split pane container
+    const splitContainer = document.createElement('div');
+    splitContainer.style.cssText = `
       flex: 1;
-      overflow: auto;
-      padding: 24px;
+      display: flex;
+      overflow: hidden;
+      position: relative;
     `;
     
-    // Create diff content
-    const diffContent = document.createElement('pre');
-    diffContent.style.cssText = `
-      background: #f8f8f8;
+    // Create left pane (original content)
+    const leftPane = document.createElement('div');
+    leftPane.style.cssText = `
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #e1e4e8;
+    `;
+    
+    const leftHeader = document.createElement('div');
+    leftHeader.style.cssText = `
+      padding: 12px 16px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #e1e4e8;
+      font-weight: 600;
+      color: #24292e;
+      font-size: 14px;
+    `;
+    leftHeader.textContent = 'Original Content';
+    
+    const leftContent = document.createElement('textarea');
+    leftContent.style.cssText = `
+      flex: 1;
       padding: 16px;
-      border-radius: 4px;
-      overflow: auto;
-      max-height: 400px;
-      white-space: pre-wrap;
+      border: none;
+      resize: none;
+      outline: none;
       font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
       font-size: 12px;
       line-height: 1.4;
+      background: #f8f9fa;
+      color: #656d76;
+    `;
+    leftContent.value = originalText;
+    leftContent.readOnly = true;
+    
+    leftPane.appendChild(leftHeader);
+    leftPane.appendChild(leftContent);
+    
+    // Create resize handle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.cssText = `
+      width: 4px;
+      background: #e1e4e8;
+      cursor: col-resize;
+      transition: background-color 0.2s;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-2px);
+      z-index: 10;
     `;
     
-    diffContent.textContent = `Original length: ${originalText.length} characters\nNew length: ${newText.length} characters\n\n--- Preview of changes ---\n${newText}`;
+    resizeHandle.addEventListener('mouseenter', () => {
+      resizeHandle.style.background = '#0969da';
+    });
     
-    content.appendChild(diffContent);
+    resizeHandle.addEventListener('mouseleave', () => {
+      resizeHandle.style.background = '#e1e4e8';
+    });
     
-    // Create footer with buttons
+    // Create right pane (new content - editable)
+    const rightPane = document.createElement('div');
+    rightPane.style.cssText = `
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    `;
+    
+    // Create tab header for right pane
+    const rightHeader = document.createElement('div');
+    rightHeader.style.cssText = `
+      background: #f6f8fa;
+      border-bottom: 1px solid #e1e4e8;
+      display: flex;
+      align-items: center;
+    `;
+    
+    // Create tab navigation
+    const tabNav = document.createElement('div');
+    tabNav.style.cssText = `
+      display: flex;
+      flex: 1;
+    `;
+    
+    const editTab = document.createElement('button');
+    editTab.textContent = 'Edit';
+    editTab.style.cssText = `
+      padding: 12px 16px;
+      background: white;
+      border: none;
+      border-bottom: 2px solid #fd8c73;
+      font-weight: 600;
+      color: #24292e;
+      font-size: 14px;
+      cursor: pointer;
+    `;
+    editTab.classList.add('active-tab');
+    
+    const previewTab = document.createElement('button');
+    previewTab.textContent = 'Preview';
+    previewTab.style.cssText = `
+      padding: 12px 16px;
+      background: #f6f8fa;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-weight: 600;
+      color: #656d76;
+      font-size: 14px;
+      cursor: pointer;
+    `;
+    
+    tabNav.appendChild(editTab);
+    tabNav.appendChild(previewTab);
+    rightHeader.appendChild(tabNav);
+    
+    // Create content container for tabs
+    const rightContentContainer = document.createElement('div');
+    rightContentContainer.style.cssText = `
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    `;
+    
+    const rightContent = document.createElement('textarea');
+    rightContent.style.cssText = `
+      flex: 1;
+      padding: 16px;
+      border: none;
+      resize: none;
+      outline: none;
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      background: white;
+      display: block;
+    `;
+    rightContent.value = newText;
+    
+    // Create preview content container
+    const previewContent = document.createElement('div');
+    previewContent.style.cssText = `
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: white;
+      display: none;
+    `;
+    previewContent.innerHTML = this.renderMarkdown(newText);
+    
+    rightContentContainer.appendChild(rightContent);
+    rightContentContainer.appendChild(previewContent);
+    
+    // Tab switching logic
+    editTab.addEventListener('click', () => {
+      editTab.style.cssText = `
+        padding: 12px 16px;
+        background: white;
+        border: none;
+        border-bottom: 2px solid #fd8c73;
+        font-weight: 600;
+        color: #24292e;
+        font-size: 14px;
+        cursor: pointer;
+      `;
+      previewTab.style.cssText = `
+        padding: 12px 16px;
+        background: #f6f8fa;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 600;
+        color: #656d76;
+        font-size: 14px;
+        cursor: pointer;
+      `;
+      rightContent.style.display = 'block';
+      previewContent.style.display = 'none';
+    });
+    
+    previewTab.addEventListener('click', () => {
+      previewTab.style.cssText = `
+        padding: 12px 16px;
+        background: white;
+        border: none;
+        border-bottom: 2px solid #fd8c73;
+        font-weight: 600;
+        color: #24292e;
+        font-size: 14px;
+        cursor: pointer;
+      `;
+      editTab.style.cssText = `
+        padding: 12px 16px;
+        background: #f6f8fa;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 600;
+        color: #656d76;
+        font-size: 14px;
+        cursor: pointer;
+      `;
+      rightContent.style.display = 'none';
+      previewContent.style.display = 'block';
+      // Update preview content when switching to preview tab
+      previewContent.innerHTML = this.renderMarkdown(rightContent.value);
+    });
+    
+    // Update preview when content changes in edit mode
+    rightContent.addEventListener('input', () => {
+      if (previewContent.style.display === 'block') {
+        previewContent.innerHTML = this.renderMarkdown(rightContent.value);
+      }
+    });
+    
+    // Create copy buttons container (below right pane)
+    const copyButtonsContainer = document.createElement('div');
+    copyButtonsContainer.style.cssText = `
+      padding: 12px 16px;
+      border-top: 1px solid #e1e4e8;
+      background: #f8f9fa;
+      display: flex;
+      gap: 8px;
+    `;
+    
+    // Create copy buttons
+    const copyFullBtn = this.createStyledButton('Copy Full Content', 'copy');
+    const copySpecsBtn = this.createStyledButton('Copy Figma Section', 'copy');
+    
+    copyButtonsContainer.appendChild(copyFullBtn);
+    copyButtonsContainer.appendChild(copySpecsBtn);
+    
+    rightPane.appendChild(rightHeader);
+    rightPane.appendChild(rightContentContainer);
+    rightPane.appendChild(copyButtonsContainer);
+    
+    // Add resize functionality
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startLeftWidth = leftPane.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      
+      const deltaX = e.clientX - startX;
+      const containerWidth = splitContainer.offsetWidth;
+      const newLeftWidth = startLeftWidth + deltaX;
+      const leftPercentage = Math.max(20, Math.min(80, (newLeftWidth / containerWidth) * 100));
+      
+      leftPane.style.width = `${leftPercentage}%`;
+      rightPane.style.width = `${100 - leftPercentage}%`;
+      resizeHandle.style.left = `${leftPercentage}%`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+    
+    splitContainer.appendChild(leftPane);
+    splitContainer.appendChild(resizeHandle);
+    splitContainer.appendChild(rightPane);
+    
+    // Create footer with action buttons
     const footer = document.createElement('div');
     footer.style.cssText = `
       padding: 16px 24px;
@@ -646,69 +911,25 @@ class FigmaPRProcessor {
       justify-content: flex-end;
     `;
     
-    // Create buttons
-    const copySpecsBtn = document.createElement('button');
-    copySpecsBtn.textContent = 'Copy Figma Section';
-    copySpecsBtn.style.cssText = `
-      padding: 8px 16px;
-      border: 1px solid #d0d7de;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      margin-right: auto;
-    `;
+    const cancelBtn = this.createStyledButton('Cancel', 'cancel');
+    const approveBtn = this.createStyledButton('Approve & Apply', 'approve');
     
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.style.cssText = `
-      padding: 8px 16px;
-      border: 1px solid #d0d7de;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-    `;
-    
-    const copyFullBtn = document.createElement('button');
-    copyFullBtn.textContent = 'Copy Full Content';
-    copyFullBtn.style.cssText = `
-      padding: 8px 16px;
-      border: 1px solid #d0d7de;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-    `;
-    
-    const approveBtn = document.createElement('button');
-    approveBtn.textContent = 'Approve & Apply';
-    approveBtn.style.cssText = `
-      padding: 8px 16px;
-      border: 1px solid #1f883d;
-      border-radius: 6px;
-      background: #1f883d;
-      color: white;
-      cursor: pointer;
-    `;
+    footer.appendChild(cancelBtn);
+    footer.appendChild(approveBtn);
     
     // Add event listeners
+    copyFullBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(rightContent.value);
+      this.showButtonFeedback(copyFullBtn, 'Copied!');
+    });
+    
     copySpecsBtn.addEventListener('click', () => {
-      // Extract specs section using custom heading pattern
-      let specsSection = null;
-      const headingPatterns = ['Design Specs', 'Screenshots', 'Design Pics'];
-      
-      for (const heading of headingPatterns) {
-        const specStart = newText.indexOf(`## ${heading}`);
-        const endMarker = newText.indexOf(`<!-- END_${heading.toUpperCase().replace(/\s+/g, '_')}_SPECS`);
-        
-        if (specStart > -1 && endMarker > -1) {
-          const endPos = endMarker + newText.substring(endMarker).indexOf('-->') + 3;
-          specsSection = newText.substring(specStart, endPos);
-          break;
-        }
-      }
+      const currentText = rightContent.value;
+      const specsSection = this.extractSpecsSection(currentText);
       
       if (specsSection) {
         navigator.clipboard.writeText(specsSection);
-        this.showSuccess('Figma section copied to clipboard');
+        this.showButtonFeedback(copySpecsBtn, 'Copied!');
       } else {
         this.showError('No specs section found');
       }
@@ -719,29 +940,192 @@ class FigmaPRProcessor {
       this.showInfo('Changes cancelled');
     });
     
-    copyFullBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(newText);
-      this.showSuccess('Full content copied to clipboard');
-    });
-    
     approveBtn.addEventListener('click', () => {
       document.body.removeChild(overlay);
-      onApprove(newText);
+      onApprove(rightContent.value);
     });
     
     // Assemble modal
-    footer.appendChild(copySpecsBtn);
-    footer.appendChild(cancelBtn);
-    footer.appendChild(copyFullBtn);
-    footer.appendChild(approveBtn);
-    
     modal.appendChild(header);
-    modal.appendChild(content);
+    modal.appendChild(splitContainer);
     modal.appendChild(footer);
     
     overlay.appendChild(modal);
     
     return overlay;
+  }
+
+  createStyledButton(text, type) {
+    const button = document.createElement('button');
+    button.textContent = text;
+    
+    let baseStyles, hoverStyles;
+    
+    switch (type) {
+      case 'copy':
+        baseStyles = `
+          padding: 6px 12px;
+          border: 1px solid #d0d7de;
+          border-radius: 6px;
+          background: white;
+          color: #24292e;
+          cursor: pointer;
+          font-size: 12px;
+          transition: all 0.2s ease;
+        `;
+        hoverStyles = 'background: #f6f8fa; border-color: #8c959f;';
+        break;
+        
+      case 'cancel':
+        baseStyles = `
+          padding: 8px 16px;
+          border: 1px solid #da3633;
+          border-radius: 6px;
+          background: white;
+          color: #da3633;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s ease;
+        `;
+        hoverStyles = 'background: #da3633; color: white;';
+        break;
+        
+      case 'approve':
+        baseStyles = `
+          padding: 8px 16px;
+          border: 1px solid #1f883d;
+          border-radius: 6px;
+          background: #1f883d;
+          color: white;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s ease;
+        `;
+        hoverStyles = 'background: #1a7f37; border-color: #1a7f37;';
+        break;
+    }
+    
+    button.style.cssText = baseStyles;
+    
+    button.addEventListener('mouseenter', () => {
+      button.style.cssText = baseStyles + hoverStyles;
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.cssText = baseStyles;
+    });
+    
+    return button;
+  }
+
+  showButtonFeedback(button, message) {
+    const originalText = button.textContent;
+    button.textContent = message;
+    button.style.background = '#1f883d';
+    button.style.color = 'white';
+    button.style.borderColor = '#1f883d';
+    
+    setTimeout(() => {
+      button.textContent = originalText;
+      button.style.background = 'white';
+      button.style.color = '#24292e';
+      button.style.borderColor = '#d0d7de';
+    }, 1500);
+  }
+
+  extractSpecsSection(text) {
+    const startMarker = `<!-- START_FIGMA_SECTION -->`;
+    const endMarker = `<!-- END_FIGMA_SECTION`;
+    
+    const startIndex = text.indexOf(startMarker);
+    const endMarkerIndex = text.indexOf(endMarker);
+    
+    if (startIndex > -1 && endMarkerIndex > startIndex) {
+      const endPos = endMarkerIndex + text.substring(endMarkerIndex).indexOf('-->') + 3;
+      return text.substring(startIndex, endPos);
+    }
+    
+    return null;
+  }
+
+  renderMarkdown(text) {
+    // Simple markdown renderer for preview
+    let html = text
+      // Handle code blocks first
+      .replace(/```([^`]*?)```/g, '<pre><code>$1</code></pre>')
+      // Handle inline code
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Handle headers
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      // Handle bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Handle italic
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Handle links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+      // Handle images
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;" />')
+      // Handle horizontal rules
+      .replace(/^---$/gm, '<hr>')
+      // Handle line breaks (double space + newline or double newline)
+      .replace(/  \n/g, '<br>')
+      .replace(/\n\n/g, '</p><p>')
+      // Handle lists
+      .replace(/^\* (.*$)/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+      // Wrap in paragraphs
+      .replace(/^(?!<[hup]|<\/[hup]|<hr|<ul|<\/ul|<li|<\/li)(.+)$/gm, '<p>$1</p>');
+
+    // Clean up any empty paragraphs or duplicate paragraph tags
+    html = html
+      .replace(/<p><\/p>/g, '')
+      .replace(/<p>(<[^>]+>)/g, '$1')
+      .replace(/(<\/[^>]+>)<\/p>/g, '$1')
+      .replace(/<p>(<ul>)/g, '$1')
+      .replace(/(<\/ul>)<\/p>/g, '$1')
+      .replace(/<p>(<h[1-6]>)/g, '$1')
+      .replace(/(<\/h[1-6]>)<\/p>/g, '$1')
+      .replace(/<p>(<hr>)<\/p>/g, '$1');
+
+    return `
+      <div style="
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        line-height: 1.6;
+        color: #24292e;
+      ">
+        <style>
+          h1, h2, h3 { margin-top: 24px; margin-bottom: 16px; font-weight: 600; }
+          h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
+          h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
+          h3 { font-size: 1.25em; }
+          p { margin-bottom: 16px; }
+          code { 
+            background: #f6f8fa; 
+            padding: 2px 4px; 
+            border-radius: 3px; 
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 85%;
+          }
+          pre { 
+            background: #f6f8fa; 
+            padding: 16px; 
+            border-radius: 6px; 
+            overflow-x: auto;
+            margin: 16px 0;
+          }
+          pre code { background: none; padding: 0; }
+          ul { margin: 16px 0; padding-left: 30px; }
+          li { margin-bottom: 4px; }
+          hr { border: 0; border-top: 1px solid #eaecef; margin: 24px 0; }
+          a { color: #0366d6; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+          strong { font-weight: 600; }
+        </style>
+        ${html}
+      </div>
+    `;
   }
 }
 
