@@ -95,9 +95,9 @@ export function getExistingSpecsByNodeId(text) {
  */
 export function createReferenceText(isMarkdownLink, linkText, specNumber, specId) {
   if (isMarkdownLink && linkText) {
-    return `${linkText} ([Refer to Design Spec ${specNumber} below](#${specId}))`;
+    return `${linkText} ([Refer to Design Spec ${specNumber}](#${specId}))`;
   } else {
-    return `[Refer to Design Spec ${specNumber} below](#${specId})`;
+    return `[Refer to Design Spec ${specNumber}](#${specId})`;
   }
 }
 
