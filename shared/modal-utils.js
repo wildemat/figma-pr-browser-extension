@@ -458,45 +458,9 @@ function showButtonFeedback(button, message) {
 }
 
 function renderMarkdown(text) {
-  // Simple markdown renderer for preview
-  let html = text
-    // Handle code blocks first
-    .replace(/```([^`]*?)```/g, '<pre><code>$1</code></pre>')
-    // Handle inline code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Handle headers
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-    // Handle bold
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Handle italic
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Handle links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-    // Handle images
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;" />')
-    // Handle horizontal rules
-    .replace(/^---$/gm, '<hr>')
-    // Handle line breaks (double space + newline or double newline)
-    .replace(/  \n/g, '<br>')
-    .replace(/\n\n/g, '</p><p>')
-    // Handle lists
-    .replace(/^\* (.*$)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    // Wrap in paragraphs
-    .replace(/^(?!<[hup]|<\/[hup]|<hr|<ul|<\/ul|<li|<\/li)(.+)$/gm, '<p>$1</p>');
-
-  // Clean up any empty paragraphs or duplicate paragraph tags
-  html = html
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[^>]+>)/g, '$1')
-    .replace(/(<\/[^>]+>)<\/p>/g, '$1')
-    .replace(/<p>(<ul>)/g, '$1')
-    .replace(/(<\/ul>)<\/p>/g, '$1')
-    .replace(/<p>(<h[1-6]>)/g, '$1')
-    .replace(/(<\/h[1-6]>)<\/p>/g, '$1')
-    .replace(/<p>(<hr>)<\/p>/g, '$1');
+  // Use Snarkdown library for markdown rendering
+  // Note: This requires snarkdown to be loaded globally
+  const html = typeof snarkdown !== 'undefined' ? snarkdown(text) : text;
 
   return `
     <div style="
