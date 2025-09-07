@@ -12,7 +12,7 @@ class FigmaPRProcessor {
 
   async init() {
     // Get Figma token from storage
-    const result = await browser.storage.sync.get(['figmaToken']);
+    const result = await chrome.storage.sync.get(['figmaToken']);
     this.figmaToken = result.figmaToken;
 
     if (!this.figmaToken) {
@@ -290,9 +290,9 @@ class FigmaPRProcessor {
 
   async getSettings() {
     return new Promise((resolve, reject) => {
-      browser.storage.sync.get(['figmaToken', 'specHeading', 'diffApprovalEnabled'], (result) => {
-        if (browser.runtime.lastError) {
-          reject(new Error(browser.runtime.lastError.message));
+      chrome.storage.sync.get(['figmaToken', 'specHeading', 'diffApprovalEnabled'], (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
         } else {
           resolve({
             figmaToken: result.figmaToken || null,

@@ -20,7 +20,7 @@ const VALIDATION = {
 
 // Detect browser API
 const browserAPI = (() => {
-  if (typeof chrome !== 'undefined' && browser.storage) {
+  if (typeof chrome !== 'undefined' && chrome.storage) {
     return chrome;
   } else if (typeof browser !== 'undefined' && browser.storage) {
     return browser;

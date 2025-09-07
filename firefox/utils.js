@@ -1,54 +1,62 @@
-/**
- * Utility functions for formatting and text processing
- */
+// Shared utility functions for browser extensions
+// These functions are used by both Chrome and Firefox content scripts
 
-/**
- * Calculates the expiration date for Figma image URLs (30 days from now)
- * @returns {string} Expiration date in YYYY-MM-DD format
- */
+// Figma API utilities
+function parseFigmaUrl(url) {
+  const fileIdMatch = url.match(/\/design\/([^/]+)\//);
+  const nodeIdMatch = url.match(/node-id=([^&\s)]+)/);
+  const versionMatch = url.match(/version-id=([^&\s)]+)/);
+  
+  if (fileIdMatch && nodeIdMatch) {
+    return {
+      fileId: fileIdMatch[1],
+      nodeId: nodeIdMatch[1].replace('-', ':'),
+      versionId: versionMatch ? versionMatch[1] : null
+    };
+  }
+  return null;
+}
+
+async function fetchLatestVersion(fileId, figmaToken) {
+  const response = await fetch(`https://api.figma.com/v1/files/${fileId}/versions`, {
+    headers: { 'X-Figma-Token': figmaToken }
+  });
+  const data = await response.json();
+  return data.versions[0];
+}
+
+async function fetchNodeImageUrl(fileId, nodeId, figmaToken) {
+  const response = await fetch(`https://api.figma.com/v1/images/${fileId}?ids=${nodeId}&format=png&scale=2`, {
+    headers: { 'X-Figma-Token': figmaToken }
+  });
+  const data = await response.json();
+  const imageUrl = data.images[nodeId];
+  if (!imageUrl) throw new Error(`Could not get image for node ${nodeId}`);
+  return imageUrl;
+}
+
+function createVersionFromId(versionId) {
+  return {
+    id: versionId,
+    created_at: new Date().toISOString(),
+  };
+}
+
+// Utility functions
 function calculateImageExpirationDate() {
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 30);
   return expirationDate.toISOString().split("T")[0];
 }
 
-/**
- * Creates a clean Figma URL with only essential parameters
- * @param {string} fileId - Figma file ID
- * @param {string} nodeId - Figma node ID (in colon format, e.g., "3143:20344")
- * @param {string} versionId - Figma version ID
- * @returns {string} Clean Figma URL
- */
 function createCleanFigmaUrl(fileId, nodeId, versionId) {
   const dashNodeId = nodeId.replace(":", "-");
   return `https://www.figma.com/design/${fileId}/?node-id=${dashNodeId}&version-id=${versionId}&m=dev`;
 }
 
-/**
- * Creates a design spec snippet for the Design Specs section with protected markers
- * @param {number} specNumber - Sequential spec number
- * @param {string} specId - Anchor ID for the spec
- * @param {string} attachmentUrl - URL of the design preview image
- * @param {string} cleanUrl - Clean Figma URL
- * @param {string} versionId - Figma version ID
- * @param {string} snapshotTimestamp - Version creation timestamp
- * @param {string} expirationString - Image expiration date
- * @returns {string} Formatted design spec markdown
- */
-function createDesignSpecSnippet(
-  specNumber,
-  specId,
-  attachmentUrl,
-  cleanUrl,
-  versionId,
-  snapshotTimestamp,
-  expirationString
-) {
-  const startMarker = `<!-- START_SPEC_${specNumber} -->`;
-  const endMarker = `<!-- END_SPEC_${specNumber} -->`;
-
+function createDesignSpecSnippet(specNumber, specId, attachmentUrl, cleanUrl, versionId, snapshotTimestamp, expirationString) {
   return `
-${startMarker}
+<!-- START_SPEC_${specNumber} -->
 
 <a id="${specId}"></a>
 
@@ -77,75 +85,116 @@ ${startMarker}
 </details>
 
 ---
-
-${endMarker}
+<!-- END_SPEC_${specNumber} -->
 
 `;
 }
 
-/**
- * Creates a reference text to replace original Figma URLs
- * @param {boolean} isMarkdownLink - Whether the original was a markdown link
- * @param {string|null} linkText - Text from markdown link (null for standalone URLs)
- * @param {number} specNumber - Sequential spec number
- * @param {string} specId - Anchor ID for the spec
- * @returns {string} Reference text to replace original URL
- */
 function createReferenceText(isMarkdownLink, linkText, specNumber, specId) {
-  if (isMarkdownLink && linkText) {
-    return `${linkText} ([Refer to Design Spec ${specNumber}](#${specId}))`;
+  if (isMarkdownLink) {
+    return `[${linkText}](#${specId}) (→ Design Spec ${specNumber})`;
   } else {
     return `[Refer to Design Spec ${specNumber}](#${specId})`;
   }
 }
 
-/**
- * Generates the end marker comment for the Design Specs section
- * @returns {string} HTML comment marker
- */
 function getDesignSpecsEndMarker() {
   return "<!-- END_DESIGN_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->";
 }
 
-/**
- * Creates a standardized link object from parsed Figma URL components
- * @param {string} url - Original Figma URL
- * @param {string} fileId - Figma file ID
- * @param {string} nodeId - Figma node ID (in colon format)
- * @param {string} fullMatch - Complete matched text (URL or markdown link)
- * @param {boolean} isMarkdownLink - Whether this was originally a markdown link
- * @param {string|null} linkText - Text from markdown link (null for standalone URLs)
- * @param {boolean} isInSpecsSection - Whether this link was found within the Design Specs section
- * @returns {Object} Standardized link object
- */
-function createLinkObject(
-  url,
-  fileId,
-  nodeId,
-  fullMatch,
-  isMarkdownLink,
-  linkText = null,
-  isInSpecsSection = false
-) {
-  return {
-    url,
-    fileId,
-    nodeId,
-    fullMatch,
-    isMarkdownLink,
-    linkText,
-    isInSpecsSection,
-  };
+// Shared styling functions
+function createStyledButton(text, type) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.type = 'button';
+  
+  const baseStyles = `
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    line-height: 1.2857142857;
+    vertical-align: middle;
+    user-select: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin-right: 8px;
+  `;
+  
+  let hoverStyles;
+  
+  switch (type) {
+    case 'primary':
+      button.style.cssText = baseStyles + `
+        color: #fff;
+        background: #2da44e;
+        border-color: #2da44e;
+      `;
+      hoverStyles = 'background: #2c974b; border-color: #2c974b;';
+      break;
+    case 'danger':
+      button.style.cssText = baseStyles + `
+        color: #fff;
+        background: #da3633;
+        border-color: #da3633;
+      `;
+      hoverStyles = 'background: #c93c37; border-color: #c93c37;';
+      break;
+    case 'secondary':
+    default:
+      button.style.cssText = baseStyles + `
+        color: #24292e;
+        background: #f6f8fa;
+        border-color: #d0d7de;
+      `;
+      hoverStyles = 'background: #f3f4f6; border-color: #d0d7de;';
+      break;
+    case 'success':
+      button.style.cssText = baseStyles + `
+        color: #fff;
+        background: #2da44e;
+        border-color: #2da44e;
+      `;
+      hoverStyles = 'background: #1a7f37; border-color: #1a7f37;';
+      break;
+  }
+  
+  button.style.cssText = baseStyles;
+  
+  button.addEventListener('mouseenter', () => {
+    button.style.cssText += hoverStyles;
+  });
+  
+  button.addEventListener('mouseleave', () => {
+    button.style.cssText = baseStyles;
+  });
+  
+  return button;
 }
 
-// Export for use in extension
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    calculateImageExpirationDate,
-    createCleanFigmaUrl,
-    createDesignSpecSnippet,
-    createReferenceText,
-    getDesignSpecsEndMarker,
-    createLinkObject
-  };
+function showButtonFeedback(button, message) {
+  const originalText = button.innerHTML;
+  const originalColor = button.style.color;
+  const originalBg = button.style.background;
+  const originalBorder = button.style.borderColor;
+  
+  button.innerHTML = message;
+  button.style.color = '#fff';
+  button.style.background = '#2da44e';
+  button.style.borderColor = '#2da44e';
+  
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.style.color = '#24292e';
+    button.style.background = '#f6f8fa';
+    button.style.borderColor = '#d0d7de';
+  }, 1500);
 }
