@@ -93,6 +93,7 @@ class PopupManager {
     this.specHeadingInput = document.getElementById('specHeading');
     this.diffApprovalCheckbox = document.getElementById('diffApproval');
     this.testBtn = document.getElementById('testBtn');
+    this.clearBtn = document.getElementById('clearBtn');
     this.status = document.getElementById('status');
   }
 
@@ -118,6 +119,9 @@ class PopupManager {
     
     // Test token
     this.testBtn.addEventListener('click', () => this.handleTestToken());
+    
+    // Clear token
+    this.clearBtn.addEventListener('click', () => this.handleClearToken());
   }
 
   async handleSave(e) {
@@ -196,6 +200,22 @@ class PopupManager {
     } finally {
       this.testBtn.disabled = false;
       this.testBtn.textContent = 'Test Token';
+    }
+  }
+
+  async handleClearToken() {
+    if (confirm('Are you sure you want to clear the saved Figma token?')) {
+      try {
+        // Clear token from storage
+        await setStorageValue({ [STORAGE_KEYS.FIGMA_TOKEN]: '' });
+        
+        // Clear the input field
+        this.tokenInput.value = '';
+        
+        this.showStatus('Token cleared successfully', 'success');
+      } catch (error) {
+        this.showStatus('Error clearing token: ' + error.message, 'error');
+      }
     }
   }
 

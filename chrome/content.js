@@ -16,8 +16,7 @@ class FigmaPRProcessor {
     this.figmaToken = result.figmaToken;
 
     if (!this.figmaToken) {
-      console.log('Figma PR Extension: No token found. Please configure in extension popup.');
-      return;
+      console.log('Figma PR Extension: No token found. Button will prompt for token configuration.');
     }
 
     this.addProcessButton();
@@ -35,6 +34,35 @@ class FigmaPRProcessor {
     // Only add button if we're in PR description edit mode and Write tab is selected
     const prDescriptionTextarea = document.querySelector('#pull_request_body') ||
                                  document.querySelector('textarea[name="pull_request[body]"]');
+    
+    // Check if we're actually in edit mode (not just viewing)
+    // Edit mode is determined by visibility of Cancel and Update buttons within first .js-comment-update container
+    const firstCommentUpdateContainer = document.querySelector('.js-comment-update');
+    let isInEditMode = false;
+    
+    if (firstCommentUpdateContainer) {
+      const cancelButton = firstCommentUpdateContainer.querySelector('.js-comment-cancel-button');
+      
+      // Look for update/submit button with multiple selectors
+      const updateButton = firstCommentUpdateContainer.querySelector('button[type="submit"]:not(.js-comment-cancel-button)') ||
+                          firstCommentUpdateContainer.querySelector('button.Button--primary') ||
+                          firstCommentUpdateContainer.querySelector('button:has(.Button-label)') ||
+                          firstCommentUpdateContainer.querySelector('input[type="submit"]');
+      
+      // Debug logging
+      console.log('Edit mode check:', {
+        container: !!firstCommentUpdateContainer,
+        cancelButton: !!cancelButton,
+        cancelVisible: cancelButton ? cancelButton.offsetParent !== null : false,
+        updateButton: !!updateButton,
+        updateVisible: updateButton ? updateButton.offsetParent !== null : false
+      });
+      
+      // Edit mode only if both buttons exist and are visible within the first .js-comment-update container
+      isInEditMode = cancelButton && updateButton && 
+                    cancelButton.offsetParent !== null && 
+                    updateButton.offsetParent !== null;
+    }
     
     // Debug: Check tab states
     const writeTab = document.querySelector('.write-tab.selected') ||
@@ -73,10 +101,10 @@ class FigmaPRProcessor {
     
     console.log('Tab states:', { isWriteTabActive, isPreviewTabActive });
     
-    // Must have PR description textarea and Write tab active (not Preview)
+    // Must have PR description textarea, be in edit mode, and Write tab active (not Preview)
     // If Preview tab is active, always hide button regardless of Write tab state
-    if (!prDescriptionTextarea || !prDescriptionTextarea.offsetParent || isPreviewTabActive || !isWriteTabActive) {
-      console.log('Button hidden - textarea:', !!prDescriptionTextarea, 'visible:', !!(prDescriptionTextarea?.offsetParent), 'writeActive:', isWriteTabActive, 'previewActive:', isPreviewTabActive);
+    if (!prDescriptionTextarea || !isInEditMode || isPreviewTabActive || !isWriteTabActive) {
+      console.log('Button hidden - textarea:', !!prDescriptionTextarea, 'editMode:', !!isInEditMode, 'writeActive:', isWriteTabActive, 'previewActive:', isPreviewTabActive);
       return;
     }
 
@@ -172,8 +200,10 @@ class FigmaPRProcessor {
                 node.matches('.tabnav-tab') ||
                 node.matches('.timeline-comment-actions') ||
                 node.matches('.edit-comment-hide') ||
+                node.matches('.js-comment-update') ||
+                node.matches('.comment-form-head') ||
                 node.matches('textarea') ||
-                node.querySelector('.tabnav-tab, .timeline-comment-actions, .edit-comment-hide, textarea')
+                node.querySelector('.tabnav-tab, .timeline-comment-actions, .edit-comment-hide, .js-comment-update, .comment-form-head, textarea')
               );
             }) || removedNodes.some(node => {
               if (node.nodeType !== Node.ELEMENT_NODE) return false;
@@ -181,6 +211,8 @@ class FigmaPRProcessor {
                 node.matches('.tabnav-tab') ||
                 node.matches('.timeline-comment-actions') ||
                 node.matches('.edit-comment-hide') ||
+                node.matches('.js-comment-update') ||
+                node.matches('.comment-form-head') ||
                 node.matches('textarea')
               );
             });
@@ -206,7 +238,7 @@ class FigmaPRProcessor {
   }
 
   addTabClickListeners() {
-    // Listen for clicks on Write/Preview tabs
+    // Listen for clicks on Write/Preview tabs, Cancel buttons, and Edit buttons
     document.addEventListener('click', (event) => {
       const target = event.target;
       
@@ -224,6 +256,28 @@ class FigmaPRProcessor {
           console.log('Updating button after tab click');
           this.addProcessButton();
         }, 100);
+      }
+      
+      // Check if clicked element is a cancel button
+      if (target && target.classList.contains('js-comment-cancel-button')) {
+        console.log('Cancel button clicked');
+        
+        // Delay to allow GitHub to exit edit mode
+        setTimeout(() => {
+          console.log('Updating button after cancel click');
+          this.addProcessButton();
+        }, 100);
+      }
+      
+      // Check if clicked element is an edit button
+      if (target && target.classList.contains('js-comment-edit-button')) {
+        console.log('Edit button clicked');
+        
+        // Delay to allow GitHub to enter edit mode
+        setTimeout(() => {
+          console.log('Updating button after edit click');
+          this.addProcessButton();
+        }, 200); // Slightly longer delay for edit mode to fully load
       }
     }, true); // Use capture phase to catch the event early
   }
@@ -243,7 +297,8 @@ class FigmaPRProcessor {
       const settings = await this.getSettings();
       
       if (!settings.figmaToken) {
-        throw new Error('Please configure your Figma API token in the extension popup first.');
+        this.showTokenPrompt();
+        return;
       }
 
       // Get PR description textarea (not comment field)
@@ -536,6 +591,126 @@ class FigmaPRProcessor {
 
   showInfo(message) {
     this.showNotification(message, 'info');
+  }
+
+  showTokenPrompt() {
+    // Create a more prominent modal-style prompt
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 16px 64px rgba(0,0,0,0.2);
+      text-align: center;
+    `;
+
+    modal.innerHTML = `
+      <div style="margin-bottom: 16px;">
+        <img id="extension-icon" style="width: 48px; height: 48px;" alt="Figma PR Extension" />
+      </div>
+      <h3 style="margin: 0 0 12px 0; color: #24292f; font-size: 18px;">Figma Token Required</h3>
+      <p style="margin: 0 0 20px 0; color: #656d76; line-height: 1.4;">
+        Please configure your Figma API token to process Figma links.
+      </p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="config-token-btn" style="
+          padding: 10px 16px;
+          background: #2da44e;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+        ">Configure Token</button>
+        <button id="cancel-token-btn" style="
+          padding: 10px 16px;
+          background: #f6f8fa;
+          color: #24292f;
+          border: 1px solid #d0d7de;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+        ">Cancel</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Set the extension icon dynamically based on browser
+    const iconImg = modal.querySelector('#extension-icon');
+    const extensionId = typeof chrome !== 'undefined' && chrome.runtime ? chrome.runtime.id : 
+                       typeof browser !== 'undefined' && browser.runtime ? browser.runtime.id : null;
+    
+    if (extensionId) {
+      const iconUrl = typeof chrome !== 'undefined' ? 
+        `chrome-extension://${extensionId}/icons/icon-48.png` :
+        `moz-extension://${extensionId}/icons/icon-48.png`;
+      iconImg.src = iconUrl;
+    } else {
+      // Fallback to emoji if extension URL not available
+      iconImg.style.display = 'none';
+      iconImg.parentElement.innerHTML = '<div style="margin-bottom: 16px; font-size: 32px;">🎨</div>';
+    }
+
+    // Handle button clicks
+    modal.querySelector('#config-token-btn').addEventListener('click', () => {
+      // Open extension popup (not possible in all browsers)
+      // Instead, show instructions
+      modal.innerHTML = `
+        <div style="margin-bottom: 16px; font-size: 32px;">🔧</div>
+        <h3 style="margin: 0 0 12px 0; color: #24292f; font-size: 18px;">Configure Token</h3>
+        <p style="margin: 0 0 16px 0; color: #656d76; line-height: 1.4; text-align: left;">
+          To configure your Figma API token:<br><br>
+          1. Click the <strong>extension icon</strong> in your browser toolbar<br>
+          2. Get a token from <a href="https://www.figma.com/settings" target="_blank">Figma Settings</a><br>
+          3. Paste it in the extension popup<br>
+          4. Click <strong>Save Settings</strong><br>
+          5. Return here and try again
+        </p>
+        <button id="close-instructions-btn" style="
+          padding: 10px 16px;
+          background: #2da44e;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+          width: 100%;
+        ">Got it!</button>
+      `;
+
+      modal.querySelector('#close-instructions-btn').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+      });
+    });
+
+    modal.querySelector('#cancel-token-btn').addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
   }
 
   showNotification(message, type) {

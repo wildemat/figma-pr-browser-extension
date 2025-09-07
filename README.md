@@ -127,6 +127,17 @@ figma-pr-browser-extension/
 1. **Make changes** to the appropriate browser folder
 2. **Reload the extension** in your browser's extension management page
 3. **Test on a GitHub PR** with Figma links
+
+## Contributing
+
+We welcome contributions! To get started:
+
+1. **Read the prompts**: See [prompts.md](prompts.md) for AI-assistant prompts that help understand the codebase, customization options, and security considerations
+2. **Test your changes** thoroughly on different GitHub PR pages
+3. **Follow the existing code patterns** for browser compatibility
+4. **Update documentation** if you add new features
+
+For questions about the codebase architecture, security practices, or troubleshooting, the prompts file contains helpful starter questions for AI assistants.
 4. **Check browser console** for debug logs
 
 ## Troubleshooting
