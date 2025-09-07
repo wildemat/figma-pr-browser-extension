@@ -41,7 +41,7 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 2. **Get a Figma API token**:
    - Go to [Figma Account Settings](https://www.figma.com/developers/api#access-tokens)
    - Generate a new personal access token
-   - Ensure it has at least `current_user:read` scope
+   - Ensure it has the required scopes: `file_content:read`, `file_metadata:read`, `file_versions:read`, `current_user:read`
 3. **Configure the extension**:
    - Click the extension icon in your browser toolbar
    - Enter your Figma API token
@@ -79,8 +79,10 @@ Into interactive design specs with:
 ### Figma API Token Requirements
 
 Your Figma API token needs these scopes:
+- `file_content:read` - Required to access design content and nodes
+- `file_metadata:read` - Required to fetch file information and metadata
+- `file_versions:read` - Required for version tracking functionality
 - `current_user:read` - Required for token validation
-- Additional scopes may be needed depending on your Figma file permissions
 
 ### Token Storage
 
