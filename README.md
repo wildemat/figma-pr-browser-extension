@@ -134,9 +134,19 @@ figma-pr-browser-extension/
 
 ### Building/Testing
 
-1. **Make changes** to the appropriate browser folder
-2. **Reload the extension** in your browser's extension management page
-3. **Test on a GitHub PR** with Figma links
+1. **Make changes** to the source files in the `src/` directory
+2. **Build the extensions**: `npm run build` (or `npm run build:chrome`/`npm run build:firefox`)
+3. **Reload the extension** in your browser's extension management page
+4. **Test on a GitHub PR** with Figma links
+
+### Development Scripts
+
+- `npm run build` - Build both Chrome and Firefox extensions
+- `npm run build:chrome` - Build only Chrome extension
+- `npm run build:firefox` - Build only Firefox extension
+- `npm run dev` - Build both extensions and show loading instructions
+- `npm run lint` - Check code formatting with Prettier
+- `npm run lint:fix` - Fix code formatting issues automatically
 
 ## Contributing
 
