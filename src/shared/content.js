@@ -103,7 +103,7 @@ class FigmaPRProcessor {
     const button = document.createElement("button");
     button.id = "figma-process-btn";
     button.className = "btn btn-sm btn-outline";
-    button.innerHTML = "🎨 Process Figma Links";
+    button.textContent = "🎨 Process Figma Links";
     button.style.marginLeft = "8px";
 
     // Try edit mode specific locations first
@@ -375,7 +375,7 @@ class FigmaPRProcessor {
     const button = document.querySelector("#figma-process-btn");
     if (button) {
       button.disabled = true;
-      button.innerHTML = "⏳ Processing...";
+      button.textContent = "⏳ Processing...";
     }
 
     try {
@@ -426,13 +426,13 @@ class FigmaPRProcessor {
         this.showSuccess("Figma links processed successfully!");
       }
     } catch (error) {
-      console.error("Figma PR Extension error:", error);
+      console.error("Figma PR Links error:", error);
       this.showError(`Error: ${error.message}`);
     } finally {
       this.isProcessing = false;
       if (button) {
         button.disabled = false;
-        button.innerHTML = "🎨 Process Figma Links";
+        button.textContent = "🎨 Process Figma Links";
       }
     }
   }
@@ -771,41 +771,57 @@ class FigmaPRProcessor {
       text-align: center;
     `;
 
-    modal.innerHTML = `
-      <div style="margin-bottom: 16px;">
-        <img id="extension-icon" style="width: 48px; height: 48px;" alt="Figma PR Extension" />
-      </div>
-      <h3 style="margin: 0 0 12px 0; color: #24292f; font-size: 18px;">Figma Token Required</h3>
-      <p style="margin: 0 0 20px 0; color: #656d76; line-height: 1.4;">
-        Please configure your Figma API token to process Figma links.
-      </p>
-      <div style="display: flex; gap: 12px; justify-content: center;">
-        <button id="config-token-btn" style="
-          padding: 10px 16px;
-          background: #2da44e;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-weight: 500;
-          cursor: pointer;
-        ">Configure Token</button>
-        <button id="cancel-token-btn" style="
-          padding: 10px 16px;
-          background: #f6f8fa;
-          color: #24292f;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
-          font-weight: 500;
-          cursor: pointer;
-        ">Cancel</button>
-      </div>
-    `;
+    // Create modal content using DOM methods for security
+    const iconDiv = document.createElement("div");
+    iconDiv.style.marginBottom = "16px";
+
+    const iconImg = document.createElement("img");
+    iconImg.id = "extension-icon";
+    iconImg.style.width = "48px";
+    iconImg.style.height = "48px";
+    iconImg.alt = "Figma PR Links";
+    iconDiv.appendChild(iconImg);
+
+    const heading = document.createElement("h3");
+    heading.style.cssText =
+      "margin: 0 0 12px 0; color: #24292f; font-size: 18px;";
+    heading.textContent = "Figma Token Required";
+
+    const paragraph = document.createElement("p");
+    paragraph.style.cssText =
+      "margin: 0 0 20px 0; color: #656d76; line-height: 1.4;";
+    paragraph.textContent =
+      "Please configure your Figma API token to process Figma links.";
+
+    const buttonDiv = document.createElement("div");
+    buttonDiv.style.cssText =
+      "display: flex; gap: 12px; justify-content: center;";
+
+    const configBtn = document.createElement("button");
+    configBtn.id = "config-token-btn";
+    configBtn.style.cssText =
+      "padding: 10px 16px; background: #2da44e; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;";
+    configBtn.textContent = "Configure Token";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.id = "cancel-token-btn";
+    cancelBtn.style.cssText =
+      "padding: 10px 16px; background: #f6f8fa; color: #24292f; border: 1px solid #d0d7de; border-radius: 6px; font-weight: 500; cursor: pointer;";
+    cancelBtn.textContent = "Cancel";
+
+    buttonDiv.appendChild(configBtn);
+    buttonDiv.appendChild(cancelBtn);
+
+    modal.appendChild(iconDiv);
+    modal.appendChild(heading);
+    modal.appendChild(paragraph);
+    modal.appendChild(buttonDiv);
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
     // Set the extension icon dynamically based on browser
-    const iconImg = modal.querySelector("#extension-icon");
+    const extensionIcon = modal.querySelector("#extension-icon");
     const extensionId =
       typeof chrome !== "undefined" && chrome.runtime
         ? chrome.runtime.id
@@ -818,40 +834,55 @@ class FigmaPRProcessor {
         typeof chrome !== "undefined"
           ? `chrome-extension://${extensionId}/icons/icon-48.png`
           : `moz-extension://${extensionId}/icons/icon-48.png`;
-      iconImg.src = iconUrl;
+      extensionIcon.src = iconUrl;
     } else {
       // Fallback to emoji if extension URL not available
-      iconImg.style.display = "none";
-      iconImg.parentElement.innerHTML =
-        '<div style="margin-bottom: 16px; font-size: 32px;">🎨</div>';
+      extensionIcon.style.display = "none";
+      const fallbackDiv = document.createElement("div");
+      fallbackDiv.style.cssText = "margin-bottom: 16px; font-size: 32px;";
+      fallbackDiv.textContent = "🎨";
+      extensionIcon.parentElement.replaceChild(fallbackDiv, extensionIcon);
     }
 
     // Handle button clicks
     modal.querySelector("#config-token-btn").addEventListener("click", () => {
       // Open extension popup (not possible in all browsers)
       // Instead, show instructions
-      modal.innerHTML = `
-        <div style="margin-bottom: 16px; font-size: 32px;">🔧</div>
-        <h3 style="margin: 0 0 12px 0; color: #24292f; font-size: 18px;">Configure Token</h3>
-        <p style="margin: 0 0 16px 0; color: #656d76; line-height: 1.4; text-align: left;">
-          To configure your Figma API token:<br><br>
-          1. Click the <strong>extension icon</strong> in your browser toolbar<br>
-          2. Get a token from <a href="https://www.figma.com/settings" target="_blank">Figma Settings</a><br>
-          3. Paste it in the extension popup<br>
-          4. Click <strong>Save Settings</strong><br>
-          5. Return here and try again
-        </p>
-        <button id="close-instructions-btn" style="
-          padding: 10px 16px;
-          background: #2da44e;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-weight: 500;
-          cursor: pointer;
-          width: 100%;
-        ">Got it!</button>
-      `;
+      // Clear modal and rebuild with DOM methods
+      while (modal.firstChild) {
+        modal.removeChild(modal.firstChild);
+      }
+
+      const emojiDiv = document.createElement("div");
+      emojiDiv.style.cssText = "margin-bottom: 16px; font-size: 32px;";
+      emojiDiv.textContent = "🔧";
+
+      const title = document.createElement("h3");
+      title.style.cssText =
+        "margin: 0 0 12px 0; color: #24292f; font-size: 18px;";
+      title.textContent = "Configure Token";
+
+      const instructions = document.createElement("p");
+      instructions.style.cssText =
+        "margin: 0 0 16px 0; color: #656d76; line-height: 1.4; text-align: left;";
+      instructions.textContent =
+        "To configure your Figma API token:\n\n1. Click the extension icon in your browser toolbar\n2. Get a token from Figma Settings\n3. Paste it in the extension popup\n4. Click Save Settings\n5. Return here and try again";
+
+      const settingsLink = document.createElement("a");
+      settingsLink.href = "https://www.figma.com/settings";
+      settingsLink.target = "_blank";
+      settingsLink.textContent = "Figma Settings";
+
+      const closeBtn = document.createElement("button");
+      closeBtn.id = "close-instructions-btn";
+      closeBtn.style.cssText =
+        "padding: 10px 16px; background: #2da44e; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; width: 100%;";
+      closeBtn.textContent = "Got it!";
+
+      modal.appendChild(emojiDiv);
+      modal.appendChild(title);
+      modal.appendChild(instructions);
+      modal.appendChild(closeBtn);
 
       modal
         .querySelector("#close-instructions-btn")
@@ -953,8 +984,10 @@ class FigmaPRProcessor {
       border-bottom: 1px solid #e1e4e8;
       background: #f6f8fa;
     `;
-    header.innerHTML =
-      '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+    const headerTitle = document.createElement("h3");
+    headerTitle.style.cssText = "margin: 0; color: #24292e;";
+    headerTitle.textContent = "Review Changes";
+    header.appendChild(headerTitle);
 
     // Create split pane container
     const splitContainer = document.createElement("div");
@@ -1114,7 +1147,7 @@ class FigmaPRProcessor {
       background: white;
       display: none;
     `;
-    previewContent.innerHTML = this.renderMarkdown(newText);
+    this.safeSetHTML(previewContent, this.renderMarkdown(newText));
 
     rightContentContainer.appendChild(rightContent);
     rightContentContainer.appendChild(previewContent);
@@ -1169,13 +1202,16 @@ class FigmaPRProcessor {
       rightContent.style.display = "none";
       previewContent.style.display = "block";
       // Update preview content when switching to preview tab
-      previewContent.innerHTML = this.renderMarkdown(rightContent.value);
+      this.safeSetHTML(previewContent, this.renderMarkdown(rightContent.value));
     });
 
     // Update preview when content changes in edit mode
     rightContent.addEventListener("input", () => {
       if (previewContent.style.display === "block") {
-        previewContent.innerHTML = this.renderMarkdown(rightContent.value);
+        this.safeSetHTML(
+          previewContent,
+          this.renderMarkdown(rightContent.value),
+        );
       }
     });
 
@@ -1434,10 +1470,48 @@ class FigmaPRProcessor {
       </div>
     `;
   }
+
+  safeSetHTML(element, htmlContent) {
+    // For markdown content, we use DOMParser for safer HTML parsing
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+
+      // Clear existing content
+      element.textContent = "";
+
+      // Move all child nodes from body to the target element
+      while (doc.body.firstChild) {
+        element.appendChild(doc.body.firstChild);
+      }
+    } catch (error) {
+      // Fallback to text content if parsing fails
+      element.textContent = "Error rendering content";
+    }
+  }
 }
 
 // Include the shared modal functions directly in the content script
 // (since we can't use imports in content scripts)
+
+function safeSetHTML(element, htmlContent) {
+  // For markdown content, we use DOMParser for safer HTML parsing
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, "text/html");
+
+    // Clear existing content
+    element.textContent = "";
+
+    // Move all child nodes from body to the target element
+    while (doc.body.firstChild) {
+      element.appendChild(doc.body.firstChild);
+    }
+  } catch (error) {
+    // Fallback to text content if parsing fails
+    element.textContent = "Error rendering content";
+  }
+}
 
 function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create modal overlay
@@ -1475,8 +1549,10 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     border-bottom: 1px solid #e1e4e8;
     background: #f6f8fa;
   `;
-  header.innerHTML =
-    '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+  const headerTitle = document.createElement("h3");
+  headerTitle.style.cssText = "margin: 0; color: #24292e;";
+  headerTitle.textContent = "Review Changes";
+  header.appendChild(headerTitle);
 
   // Create split pane container
   const splitContainer = document.createElement("div");
@@ -1636,7 +1712,7 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     background: white;
     display: none;
   `;
-  previewContent.innerHTML = context.renderMarkdown(newText);
+  safeSetHTML(previewContent, context.renderMarkdown(newText));
 
   rightContentContainer.appendChild(rightContent);
   rightContentContainer.appendChild(previewContent);
@@ -1691,13 +1767,13 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     rightContent.style.display = "none";
     previewContent.style.display = "block";
     // Update preview content when switching to preview tab
-    previewContent.innerHTML = context.renderMarkdown(rightContent.value);
+    safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
   });
 
   // Update preview when content changes in edit mode
   rightContent.addEventListener("input", () => {
     if (previewContent.style.display === "block") {
-      previewContent.innerHTML = context.renderMarkdown(rightContent.value);
+      safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
     }
   });
 

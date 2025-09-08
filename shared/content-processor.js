@@ -87,7 +87,7 @@ export class FigmaContentProcessor {
         showNotification("Figma links processed successfully!", "success");
       }
     } catch (error) {
-      console.error("Figma PR Extension error:", error);
+      console.error("Figma PR Links error:", error);
       showNotification(`Error: ${error.message}`, "error");
       if (onError) onError(error);
     } finally {

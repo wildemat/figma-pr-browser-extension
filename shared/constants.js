@@ -1,5 +1,5 @@
 /**
- * Constants and regular expressions for Figma PR Extension
+ * Constants and regular expressions for Figma PR Links
  */
 
 // Figma URL patterns

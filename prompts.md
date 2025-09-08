@@ -1,11 +1,11 @@
 # AI Prompts for Contributors
 
-This file contains useful prompts for AI assistants to help contributors understand and work with the Figma PR Extension codebase.
+This file contains useful prompts for AI assistants to help contributors understand and work with the Figma PR Links codebase.
 
 ## Understanding the Extension
 
 **How does the extension work?**
-Explain how the Figma PR Extension detects GitHub PR pages and processes Figma links in descriptions. What are the main components and how do they interact?
+Explain how Figma PR Links detects GitHub PR pages and processes Figma links in descriptions. What are the main components and how do they interact?
 
 **What is the build system architecture?**
 Describe how the build.js script generates both Chrome and Firefox extensions from shared source code. How does it handle browser API differences?

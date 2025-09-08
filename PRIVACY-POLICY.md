@@ -1,10 +1,10 @@
-# Privacy Policy - Figma PR Extension
+# Privacy Policy - Figma PR Links
 
 _Last updated: September 8, 2024_
 
 ## Overview
 
-The Figma PR Extension enhances GitHub pull requests by converting Figma design links into rich design specifications. We are committed to protecting your privacy and being transparent about our data practices.
+Figma PR Links enhances GitHub pull requests by converting Figma design links into rich design specifications. We are committed to protecting your privacy and being transparent about our data practices.
 
 ## Data We Collect
 

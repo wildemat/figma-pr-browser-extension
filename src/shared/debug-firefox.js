@@ -1,11 +1,11 @@
 /**
- * Debug helper for Figma PR Extension
+ * Debug helper for Figma PR Links
  * Add this to help troubleshoot issues
  */
 
 // Add debugging to content script
 (function () {
-  console.log("=== Figma PR Extension Debug Info ===");
+  console.log("=== Figma PR Links Debug Info ===");
   console.log("URL:", window.location.href);
   console.log("Page title:", document.title);
   console.log("User agent:", navigator.userAgent);

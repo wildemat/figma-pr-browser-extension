@@ -203,18 +203,18 @@ function createStyledButton(text, type) {
 }
 
 function showButtonFeedback(button, message) {
-  const originalText = button.innerHTML;
+  const originalText = button.textContent;
   const originalColor = button.style.color;
   const originalBg = button.style.background;
   const originalBorder = button.style.borderColor;
 
-  button.innerHTML = message;
+  button.textContent = message;
   button.style.color = "#fff";
   button.style.background = "#2da44e";
   button.style.borderColor = "#2da44e";
 
   setTimeout(() => {
-    button.innerHTML = originalText;
+    button.textContent = originalText;
     button.style.color = "#24292e";
     button.style.background = "#f6f8fa";
     button.style.borderColor = "#d0d7de";

@@ -1,5 +1,5 @@
 /**
- * Background script for Figma PR Extension
+ * Background script for Figma PR Links
  */
 
 // Handle extension installation
@@ -62,4 +62,4 @@ async function testFigmaToken(token) {
   }
 }
 
-console.log("Figma PR Extension background script loaded");
+console.log("Figma PR Links background script loaded");
