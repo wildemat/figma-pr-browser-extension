@@ -4,13 +4,13 @@
 
 // Storage utilities (inline for compatibility)
 const STORAGE_KEYS = {
-  FIGMA_TOKEN: 'figmaToken',
-  SPEC_HEADING: 'specHeading',
-  DIFF_APPROVAL_ENABLED: 'diffApprovalEnabled',
+  FIGMA_TOKEN: "figmaToken",
+  SPEC_HEADING: "specHeading",
+  DIFF_APPROVAL_ENABLED: "diffApprovalEnabled",
 };
 
 const DEFAULT_CONFIG = {
-  SPEC_HEADING: 'Design Specs',
+  SPEC_HEADING: "Design Specs",
 };
 
 const VALIDATION = {
@@ -20,12 +20,12 @@ const VALIDATION = {
 
 // Detect browser API
 const browserAPI = (() => {
-  if (typeof chrome !== 'undefined' && browser.storage) {
+  if (typeof chrome !== "undefined" && browser.storage) {
     return chrome;
-  } else if (typeof browser !== 'undefined' && browser.storage) {
+  } else if (typeof browser !== "undefined" && browser.storage) {
     return browser;
   } else {
-    throw new Error('No supported browser storage API found');
+    throw new Error("No supported browser storage API found");
   }
 })();
 
@@ -58,12 +58,13 @@ async function getAllSettings() {
   const result = await getStorageValue([
     STORAGE_KEYS.FIGMA_TOKEN,
     STORAGE_KEYS.SPEC_HEADING,
-    STORAGE_KEYS.DIFF_APPROVAL_ENABLED
+    STORAGE_KEYS.DIFF_APPROVAL_ENABLED,
   ]);
-  
+
   return {
     figmaToken: result[STORAGE_KEYS.FIGMA_TOKEN] || null,
-    specHeading: result[STORAGE_KEYS.SPEC_HEADING] || DEFAULT_CONFIG.SPEC_HEADING,
+    specHeading:
+      result[STORAGE_KEYS.SPEC_HEADING] || DEFAULT_CONFIG.SPEC_HEADING,
     diffApprovalEnabled: result[STORAGE_KEYS.DIFF_APPROVAL_ENABLED] || false,
   };
 }
@@ -88,40 +89,39 @@ class PopupManager {
   }
 
   initializeElements() {
-    this.form = document.getElementById('settingsForm');
-    this.tokenInput = document.getElementById('figmaToken');
-    this.specHeadingInput = document.getElementById('specHeading');
-    this.diffApprovalCheckbox = document.getElementById('diffApproval');
-    this.testBtn = document.getElementById('testBtn');
-    this.clearBtn = document.getElementById('clearBtn');
-    this.status = document.getElementById('status');
+    this.form = document.getElementById("settingsForm");
+    this.tokenInput = document.getElementById("figmaToken");
+    this.specHeadingInput = document.getElementById("specHeading");
+    this.diffApprovalCheckbox = document.getElementById("diffApproval");
+    this.testBtn = document.getElementById("testBtn");
+    this.clearBtn = document.getElementById("clearBtn");
+    this.status = document.getElementById("status");
   }
 
   async loadSettings() {
     try {
       const settings = await getAllSettings();
-      
+
       if (settings.figmaToken) {
         this.tokenInput.value = settings.figmaToken;
       }
-      
+
       this.specHeadingInput.value = settings.specHeading;
       this.diffApprovalCheckbox.checked = settings.diffApprovalEnabled;
-      
     } catch (error) {
-      this.showStatus('Error loading settings: ' + error.message, 'error');
+      this.showStatus("Error loading settings: " + error.message, "error");
     }
   }
 
   setupEventListeners() {
     // Save settings
-    this.form.addEventListener('submit', (e) => this.handleSave(e));
-    
+    this.form.addEventListener("submit", (e) => this.handleSave(e));
+
     // Test token
-    this.testBtn.addEventListener('click', () => this.handleTestToken());
-    
+    this.testBtn.addEventListener("click", () => this.handleTestToken());
+
     // Clear token
-    this.clearBtn.addEventListener('click', () => this.handleClearToken());
+    this.clearBtn.addEventListener("click", () => this.handleClearToken());
   }
 
   async handleSave(e) {
@@ -133,22 +133,25 @@ class PopupManager {
 
     // Validate inputs
     if (!token) {
-      this.showStatus('Please enter a Figma API token', 'error');
+      this.showStatus("Please enter a Figma API token", "error");
       return;
     }
 
     if (!VALIDATION.FIGMA_TOKEN.test(token)) {
-      this.showStatus('Invalid Figma token format', 'error');
+      this.showStatus("Invalid Figma token format", "error");
       return;
     }
 
     if (!specHeading) {
-      this.showStatus('Please enter a heading for design specs', 'error');
+      this.showStatus("Please enter a heading for design specs", "error");
       return;
     }
 
     if (!VALIDATION.HEADING_TEXT.test(specHeading)) {
-      this.showStatus('Invalid heading format. Use only letters, numbers, spaces, hyphens, and underscores.', 'error');
+      this.showStatus(
+        "Invalid heading format. Use only letters, numbers, spaces, hyphens, and underscores.",
+        "error",
+      );
       return;
     }
 
@@ -156,65 +159,62 @@ class PopupManager {
       await setStorageValue({
         figmaToken: token,
         specHeading: specHeading,
-        diffApprovalEnabled: diffApprovalEnabled
+        diffApprovalEnabled: diffApprovalEnabled,
       });
-      
-      this.showStatus('Settings saved successfully!', 'success');
-      
+
+      this.showStatus("Settings saved successfully!", "success");
     } catch (error) {
-      this.showStatus('Error saving settings: ' + error.message, 'error');
+      this.showStatus("Error saving settings: " + error.message, "error");
     }
   }
 
   async handleTestToken() {
     const token = this.tokenInput.value.trim();
-    
+
     if (!token) {
-      this.showStatus('Please enter a Figma API token first', 'error');
+      this.showStatus("Please enter a Figma API token first", "error");
       return;
     }
 
     if (!VALIDATION.FIGMA_TOKEN.test(token)) {
-      this.showStatus('Invalid Figma token format', 'error');
+      this.showStatus("Invalid Figma token format", "error");
       return;
     }
 
     this.testBtn.disabled = true;
-    this.testBtn.textContent = 'Testing...';
+    this.testBtn.textContent = "Testing...";
 
     try {
       const response = await sendMessageToBackground({
-        action: 'testToken',
-        token: token
+        action: "testToken",
+        token: token,
       });
 
       if (response.success) {
-        this.showStatus(`Token is valid! ✅ (${response.user})`, 'success');
+        this.showStatus(`Token is valid! ✅ (${response.user})`, "success");
       } else {
-        this.showStatus('Token test failed: ' + response.error, 'error');
+        this.showStatus("Token test failed: " + response.error, "error");
       }
-      
     } catch (error) {
-      this.showStatus('Token test failed: ' + error.message, 'error');
-      
+      this.showStatus("Token test failed: " + error.message, "error");
     } finally {
       this.testBtn.disabled = false;
-      this.testBtn.textContent = 'Test Token';
+      this.testBtn.textContent = "Test Token";
     }
   }
 
   async handleClearToken() {
-    if (confirm('Are you sure you want to clear the saved Figma token?')) {
+    if (confirm("Are you sure you want to clear the saved Figma token?")) {
       try {
         // Clear token from storage
-        await setStorageValue({ [STORAGE_KEYS.FIGMA_TOKEN]: '' });
-        
+        await setStorageValue({ [STORAGE_KEYS.FIGMA_TOKEN]: "" });
+
         // Clear the input field
-        this.tokenInput.value = '';
-        
-        this.showStatus('Token cleared successfully', 'success');
+        this.tokenInput.value = "";
+
+        this.showStatus("Token cleared successfully", "success");
       } catch (error) {
-        this.showStatus('Error clearing token: ' + error.message, 'error');
+        this.showStatus("Error clearing token: " + error.message, "error");
       }
     }
   }
@@ -222,18 +222,18 @@ class PopupManager {
   showStatus(message, type) {
     this.status.textContent = message;
     this.status.className = `status ${type}`;
-    this.status.classList.remove('hidden');
+    this.status.classList.remove("hidden");
 
     // Hide after 3 seconds for success messages
-    if (type === 'success') {
+    if (type === "success") {
       setTimeout(() => {
-        this.status.classList.add('hidden');
+        this.status.classList.add("hidden");
       }, 3000);
     }
   }
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   new PopupManager();
 });

@@ -1,30 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Figma PR Extension",
-  "version": "1.0.0",
+  "name": "Figma PR Extension Fixed",
+  "version": "1.0.2",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "https://github.com/*",
-    "https://api.figma.com/*"
-  ],
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://github.com/*", "https://api.figma.com/*"],
   "content_scripts": [
     {
       "matches": [
         "https://github.com/*/pull/*",
         "https://github.com/*/compare/*"
       ],
-      "js": [
-        "snarkdown.js",
-        "utils.js",
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ]
+      "js": ["snarkdown.js", "utils.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
   "action": {

@@ -11,12 +11,17 @@ class FigmaPRProcessor {
   }
 
   async init() {
+    console.log(
+      "🚀 Figma PR Extension v1.0.2 - DEFINITELY FIXED VERSION - initializing...",
+    );
     // Get Figma token from storage
-    const result = await chrome.storage.sync.get(['figmaToken']);
+    const result = await chrome.storage.sync.get(["figmaToken"]);
     this.figmaToken = result.figmaToken;
 
     if (!this.figmaToken) {
-      console.log('Figma PR Extension: No token found. Button will prompt for token configuration.');
+      console.log(
+        "Figma PR Extension: No token found. Button will prompt for token configuration.",
+      );
     }
 
     this.addProcessButton();
@@ -26,121 +31,167 @@ class FigmaPRProcessor {
 
   addProcessButton() {
     // Remove existing button first
-    const existingButton = document.querySelector('#figma-process-btn');
+    const existingButton = document.querySelector("#figma-process-btn");
     if (existingButton) {
-      console.log('Removing existing button');
+      console.log("Removing existing button");
       existingButton.remove();
     }
 
     // Only add button if we're in PR description edit mode and Write tab is selected
-    const prDescriptionTextarea = document.querySelector('#pull_request_body') ||
-                                 document.querySelector('textarea[name="pull_request[body]"]');
-    
+    const prDescriptionTextarea =
+      document.querySelector("#pull_request_body") ||
+      document.querySelector('textarea[name="pull_request[body]"]');
+
     // Check if we're actually in edit mode (not just viewing)
     // Edit mode is determined by visibility of Cancel and Update buttons within first .js-comment-update container
-    const firstCommentUpdateContainer = document.querySelector('.js-comment-update');
+    const firstCommentUpdateContainer =
+      document.querySelector(".js-comment-update");
     let isInEditMode = false;
-    
+
     if (firstCommentUpdateContainer) {
-      const cancelButton = firstCommentUpdateContainer.querySelector('.js-comment-cancel-button');
-      
+      const cancelButton = firstCommentUpdateContainer.querySelector(
+        ".js-comment-cancel-button",
+      );
+
       // Look for update/submit button with multiple selectors
-      const updateButton = firstCommentUpdateContainer.querySelector('button[type="submit"]:not(.js-comment-cancel-button)') ||
-                          firstCommentUpdateContainer.querySelector('button.Button--primary') ||
-                          firstCommentUpdateContainer.querySelector('button:has(.Button-label)') ||
-                          firstCommentUpdateContainer.querySelector('input[type="submit"]');
-      
+      const updateButton =
+        firstCommentUpdateContainer.querySelector(
+          'button[type="submit"]:not(.js-comment-cancel-button)',
+        ) ||
+        firstCommentUpdateContainer.querySelector("button.Button--primary") ||
+        firstCommentUpdateContainer.querySelector(
+          "button:has(.Button-label)",
+        ) ||
+        firstCommentUpdateContainer.querySelector('input[type="submit"]');
+
       // Debug logging
-      console.log('Edit mode check:', {
+      console.log("Edit mode check:", {
         container: !!firstCommentUpdateContainer,
         cancelButton: !!cancelButton,
-        cancelVisible: cancelButton ? cancelButton.offsetParent !== null : false,
+        cancelVisible: cancelButton
+          ? cancelButton.offsetParent !== null
+          : false,
         updateButton: !!updateButton,
-        updateVisible: updateButton ? updateButton.offsetParent !== null : false
+        updateVisible: updateButton
+          ? updateButton.offsetParent !== null
+          : false,
       });
-      
+
       // Edit mode only if both buttons exist and are visible within the first .js-comment-update container
-      isInEditMode = cancelButton && updateButton && 
-                    cancelButton.offsetParent !== null && 
-                    updateButton.offsetParent !== null;
+      isInEditMode =
+        cancelButton &&
+        updateButton &&
+        cancelButton.offsetParent !== null &&
+        updateButton.offsetParent !== null;
     }
-    
+
     // Debug: Check tab states
-    const writeTab = document.querySelector('.write-tab.selected') ||
-                    document.querySelector('.js-write-tab[aria-selected="true"]');
-    const previewTab = document.querySelector('.preview-tab.selected') ||
-                      document.querySelector('.js-preview-tab[aria-selected="true"]');
-    
+    const writeTab =
+      document.querySelector(".write-tab.selected") ||
+      document.querySelector('.js-write-tab[aria-selected="true"]');
+    const previewTab =
+      document.querySelector(".preview-tab.selected") ||
+      document.querySelector('.js-preview-tab[aria-selected="true"]');
+
     // Enhanced tab detection - look for any write/preview tabs and their states
-    const allWriteTabs = document.querySelectorAll('.write-tab, .js-write-tab');
-    const allPreviewTabs = document.querySelectorAll('.preview-tab, .js-preview-tab');
-    
-    console.log('Tab debug:', {
+    const allWriteTabs = document.querySelectorAll(".write-tab, .js-write-tab");
+    const allPreviewTabs = document.querySelectorAll(
+      ".preview-tab, .js-preview-tab",
+    );
+
+    console.log("Tab debug:", {
       writeTab: writeTab,
       previewTab: previewTab,
       allWriteTabs: allWriteTabs.length,
       allPreviewTabs: allPreviewTabs.length,
-      writeTabSelected: allWriteTabs.length > 0 ? Array.from(allWriteTabs).map(tab => ({
-        classes: tab.className,
-        ariaSelected: tab.getAttribute('aria-selected'),
-        selected: tab.classList.contains('selected')
-      })) : [],
-      previewTabSelected: allPreviewTabs.length > 0 ? Array.from(allPreviewTabs).map(tab => ({
-        classes: tab.className,
-        ariaSelected: tab.getAttribute('aria-selected'),
-        selected: tab.classList.contains('selected')
-      })) : []
+      writeTabSelected:
+        allWriteTabs.length > 0
+          ? Array.from(allWriteTabs).map((tab) => ({
+              classes: tab.className,
+              ariaSelected: tab.getAttribute("aria-selected"),
+              selected: tab.classList.contains("selected"),
+            }))
+          : [],
+      previewTabSelected:
+        allPreviewTabs.length > 0
+          ? Array.from(allPreviewTabs).map((tab) => ({
+              classes: tab.className,
+              ariaSelected: tab.getAttribute("aria-selected"),
+              selected: tab.classList.contains("selected"),
+            }))
+          : [],
     });
-    
+
     // More robust tab checking
-    const isWriteTabActive = Array.from(allWriteTabs).some(tab => 
-      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+    const isWriteTabActive = Array.from(allWriteTabs).some(
+      (tab) =>
+        tab.classList.contains("selected") ||
+        tab.getAttribute("aria-selected") === "true",
     );
-    const isPreviewTabActive = Array.from(allPreviewTabs).some(tab => 
-      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+    const isPreviewTabActive = Array.from(allPreviewTabs).some(
+      (tab) =>
+        tab.classList.contains("selected") ||
+        tab.getAttribute("aria-selected") === "true",
     );
-    
-    console.log('Tab states:', { isWriteTabActive, isPreviewTabActive });
-    
+
+    console.log("Tab states:", { isWriteTabActive, isPreviewTabActive });
+
     // Must have PR description textarea, be in edit mode, and Write tab active (not Preview)
     // If Preview tab is active, always hide button regardless of Write tab state
-    if (!prDescriptionTextarea || !isInEditMode || isPreviewTabActive || !isWriteTabActive) {
-      console.log('Button hidden - textarea:', !!prDescriptionTextarea, 'editMode:', !!isInEditMode, 'writeActive:', isWriteTabActive, 'previewActive:', isPreviewTabActive);
+    if (
+      !prDescriptionTextarea ||
+      !isInEditMode ||
+      isPreviewTabActive ||
+      !isWriteTabActive
+    ) {
+      console.log(
+        "Button hidden - textarea:",
+        !!prDescriptionTextarea,
+        "editMode:",
+        !!isInEditMode,
+        "writeActive:",
+        isWriteTabActive,
+        "previewActive:",
+        isPreviewTabActive,
+      );
       return;
     }
 
     // Create process button
-    console.log('Creating new button');
-    const button = document.createElement('button');
-    button.id = 'figma-process-btn';
-    button.className = 'btn btn-sm btn-outline';
-    button.innerHTML = '🎨 Process Figma Links';
-    button.style.marginLeft = '8px';
+    console.log("Creating new button");
+    const button = document.createElement("button");
+    button.id = "figma-process-btn";
+    button.className = "btn btn-sm btn-outline";
+    button.innerHTML = "🎨 Process Figma Links";
+    button.style.marginLeft = "8px";
 
     // Try edit mode specific locations first
     const editModeLocations = [
-      '.timeline-comment-actions', // Edit mode actions
-      '.edit-comment-hide .form-actions', // Edit mode form actions
-      '.comment-form-actions', // Comment form actions
+      ".timeline-comment-actions", // Edit mode actions
+      ".edit-comment-hide .form-actions", // Edit mode form actions
+      ".comment-form-actions", // Comment form actions
     ];
 
     // Try general form locations
     const generalLocations = [
-      '.form-actions', // General form actions
-      '.new-pr-form .form-actions', // New PR form
-      '.js-write-bucket', // Write tab area
+      ".form-actions", // General form actions
+      ".new-pr-form .form-actions", // New PR form
+      ".js-write-bucket", // Write tab area
     ];
 
     let buttonAdded = false;
-    
+
     // Try edit mode locations first
     for (const selector of editModeLocations) {
       const container = document.querySelector(selector);
       if (container && !buttonAdded) {
         container.appendChild(button);
-        button.addEventListener('click', () => this.processCurrentPR());
+        button.addEventListener("click", () => this.processCurrentPR());
         buttonAdded = true;
-        console.log('Figma PR Extension: Button added to edit mode location', selector);
+        console.log(
+          "Figma PR Extension: Button added to edit mode location",
+          selector,
+        );
         break;
       }
     }
@@ -151,9 +202,12 @@ class FigmaPRProcessor {
         const container = document.querySelector(selector);
         if (container && !buttonAdded) {
           container.appendChild(button);
-          button.addEventListener('click', () => this.processCurrentPR());
+          button.addEventListener("click", () => this.processCurrentPR());
           buttonAdded = true;
-          console.log('Figma PR Extension: Button added to general location', selector);
+          console.log(
+            "Figma PR Extension: Button added to general location",
+            selector,
+          );
           break;
         }
       }
@@ -161,11 +215,11 @@ class FigmaPRProcessor {
 
     // Last resort: add to form if textarea is present
     if (!buttonAdded && textarea) {
-      const form = textarea.closest('form');
+      const form = textarea.closest("form");
       if (form) {
         form.appendChild(button);
-        button.addEventListener('click', () => this.processCurrentPR());
-        console.log('Figma PR Extension: Button added to form as fallback');
+        button.addEventListener("click", () => this.processCurrentPR());
+        console.log("Figma PR Extension: Button added to form as fallback");
       }
     }
   }
@@ -173,72 +227,89 @@ class FigmaPRProcessor {
   observePageChanges() {
     // Add click listeners for tab switching
     this.addTabClickListeners();
-    
+
     // Watch for GitHub's dynamic page updates
     const observer = new MutationObserver((mutations) => {
       let shouldUpdateButton = false;
-      
+
       mutations.forEach((mutation) => {
-        if (mutation.type === 'childList') {
+        if (mutation.type === "childList") {
           // Check if this is a relevant change (not our own button addition)
           const addedNodes = Array.from(mutation.addedNodes);
           const removedNodes = Array.from(mutation.removedNodes);
-          
+
           // Skip if we just added/removed our own button
-          const isOurButtonChange = addedNodes.some(node => 
-            node.id === 'figma-process-btn' || 
-            (node.nodeType === Node.ELEMENT_NODE && node.querySelector('#figma-process-btn'))
-          ) || removedNodes.some(node => 
-            node.id === 'figma-process-btn' || 
-            (node.nodeType === Node.ELEMENT_NODE && node.querySelector('#figma-process-btn'))
-          );
-          
+          const isOurButtonChange =
+            addedNodes.some(
+              (node) =>
+                node.id === "figma-process-btn" ||
+                (node.nodeType === Node.ELEMENT_NODE &&
+                  node.querySelector("#figma-process-btn")),
+            ) ||
+            removedNodes.some(
+              (node) =>
+                node.id === "figma-process-btn" ||
+                (node.nodeType === Node.ELEMENT_NODE &&
+                  node.querySelector("#figma-process-btn")),
+            );
+
           if (!isOurButtonChange) {
             // Check if relevant elements changed (tabs, forms, edit areas)
-            const relevantChange = addedNodes.some(node => {
-              if (node.nodeType !== Node.ELEMENT_NODE) return false;
-              return node.matches && (
-                node.matches('.tabnav-tab') ||
-                node.matches('.timeline-comment-actions') ||
-                node.matches('.edit-comment-hide') ||
-                node.matches('.js-comment-update') ||
-                node.matches('.comment-form-head') ||
-                node.matches('textarea') ||
-                node.querySelector('.tabnav-tab, .timeline-comment-actions, .edit-comment-hide, .js-comment-update, .comment-form-head, textarea')
-              );
-            }) || removedNodes.some(node => {
-              if (node.nodeType !== Node.ELEMENT_NODE) return false;
-              return node.matches && (
-                node.matches('.tabnav-tab') ||
-                node.matches('.timeline-comment-actions') ||
-                node.matches('.edit-comment-hide') ||
-                node.matches('.js-comment-update') ||
-                node.matches('.comment-form-head') ||
-                node.matches('textarea') ||
-                // Check for button removal (could indicate edit mode exit)
-                node.matches('button[data-cancel-text="Cancel"]') ||
-                node.matches('.js-comment-cancel-button') ||
-                node.querySelector('button[data-cancel-text="Cancel"], .js-comment-cancel-button')
-              );
-            });
-            
+            const relevantChange =
+              addedNodes.some((node) => {
+                if (node.nodeType !== Node.ELEMENT_NODE) return false;
+                return (
+                  node.matches &&
+                  (node.matches(".tabnav-tab") ||
+                    node.matches(".timeline-comment-actions") ||
+                    node.matches(".edit-comment-hide") ||
+                    node.matches(".js-comment-update") ||
+                    node.matches(".comment-form-head") ||
+                    node.matches("textarea") ||
+                    node.querySelector(
+                      ".tabnav-tab, .timeline-comment-actions, .edit-comment-hide, .js-comment-update, .comment-form-head, textarea",
+                    ))
+                );
+              }) ||
+              removedNodes.some((node) => {
+                if (node.nodeType !== Node.ELEMENT_NODE) return false;
+                return (
+                  node.matches &&
+                  (node.matches(".tabnav-tab") ||
+                    node.matches(".timeline-comment-actions") ||
+                    node.matches(".edit-comment-hide") ||
+                    node.matches(".js-comment-update") ||
+                    node.matches(".comment-form-head") ||
+                    node.matches("textarea") ||
+                    // Check for button removal (could indicate edit mode exit)
+                    node.matches('button[data-cancel-text="Cancel"]') ||
+                    node.matches(".js-comment-cancel-button") ||
+                    node.querySelector(
+                      'button[data-cancel-text="Cancel"], .js-comment-cancel-button',
+                    ))
+                );
+              });
+
             if (relevantChange) {
               shouldUpdateButton = true;
             }
           }
         }
       });
-      
+
       if (shouldUpdateButton) {
         // Debounce button updates
         clearTimeout(this.buttonUpdateTimeout);
-        this.buttonUpdateTimeout = setTimeout(() => this.addProcessButton(), 100);
+        this.buttonUpdateTimeout = setTimeout(
+          () => this.addProcessButton(),
+          100,
+        );
       }
     });
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
@@ -246,15 +317,16 @@ class FigmaPRProcessor {
     // Periodically check button state to catch missed events
     setInterval(() => {
       // Only check if we're not currently processing and button exists
-      if (!this.isProcessing && document.querySelector('#figma-process-btn')) {
+      if (!this.isProcessing && document.querySelector("#figma-process-btn")) {
         const shouldButtonBeVisible = this.shouldButtonBeVisible();
-        const buttonExists = document.querySelector('#figma-process-btn') !== null;
-        
+        const buttonExists =
+          document.querySelector("#figma-process-btn") !== null;
+
         // If button should not be visible but exists, or should be visible but doesn't exist
         if (shouldButtonBeVisible !== buttonExists) {
-          console.log('Periodic check: button state mismatch, updating...', {
+          console.log("Periodic check: button state mismatch, updating...", {
             shouldBeVisible: shouldButtonBeVisible,
-            exists: buttonExists
+            exists: buttonExists,
           });
           this.addProcessButton();
         }
@@ -264,174 +336,217 @@ class FigmaPRProcessor {
 
   shouldButtonBeVisible() {
     // Same logic as in addProcessButton but returns boolean
-    const prDescriptionTextarea = document.querySelector('#pull_request_body') ||
-                                 document.querySelector('textarea[name="pull_request[body]"]');
-    
-    const firstCommentUpdateContainer = document.querySelector('.js-comment-update');
+    const prDescriptionTextarea =
+      document.querySelector("#pull_request_body") ||
+      document.querySelector('textarea[name="pull_request[body]"]');
+
+    const firstCommentUpdateContainer =
+      document.querySelector(".js-comment-update");
     let isInEditMode = false;
-    
+
     if (firstCommentUpdateContainer) {
-      const cancelButton = firstCommentUpdateContainer.querySelector('.js-comment-cancel-button');
-      const updateButton = firstCommentUpdateContainer.querySelector('button[type="submit"]:not(.js-comment-cancel-button)') ||
-                          firstCommentUpdateContainer.querySelector('button.Button--primary') ||
-                          firstCommentUpdateContainer.querySelector('button:has(.Button-label)') ||
-                          firstCommentUpdateContainer.querySelector('input[type="submit"]');
-      
-      isInEditMode = cancelButton && updateButton && 
-                    cancelButton.offsetParent !== null && 
-                    updateButton.offsetParent !== null;
+      const cancelButton = firstCommentUpdateContainer.querySelector(
+        ".js-comment-cancel-button",
+      );
+      const updateButton =
+        firstCommentUpdateContainer.querySelector(
+          'button[type="submit"]:not(.js-comment-cancel-button)',
+        ) ||
+        firstCommentUpdateContainer.querySelector("button.Button--primary") ||
+        firstCommentUpdateContainer.querySelector(
+          "button:has(.Button-label)",
+        ) ||
+        firstCommentUpdateContainer.querySelector('input[type="submit"]');
+
+      isInEditMode =
+        cancelButton &&
+        updateButton &&
+        cancelButton.offsetParent !== null &&
+        updateButton.offsetParent !== null;
     }
-    
-    const allWriteTabs = document.querySelectorAll('.write-tab, .js-write-tab');
-    const allPreviewTabs = document.querySelectorAll('.preview-tab, .js-preview-tab');
-    
-    const isWriteTabActive = Array.from(allWriteTabs).some(tab => 
-      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+
+    const allWriteTabs = document.querySelectorAll(".write-tab, .js-write-tab");
+    const allPreviewTabs = document.querySelectorAll(
+      ".preview-tab, .js-preview-tab",
     );
-    const isPreviewTabActive = Array.from(allPreviewTabs).some(tab => 
-      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+
+    const isWriteTabActive = Array.from(allWriteTabs).some(
+      (tab) =>
+        tab.classList.contains("selected") ||
+        tab.getAttribute("aria-selected") === "true",
     );
-    
-    return prDescriptionTextarea && isInEditMode && !isPreviewTabActive && isWriteTabActive;
+    const isPreviewTabActive = Array.from(allPreviewTabs).some(
+      (tab) =>
+        tab.classList.contains("selected") ||
+        tab.getAttribute("aria-selected") === "true",
+    );
+
+    return (
+      prDescriptionTextarea &&
+      isInEditMode &&
+      !isPreviewTabActive &&
+      isWriteTabActive
+    );
   }
 
   addTabClickListeners() {
     // Listen for clicks on Write/Preview tabs, Cancel buttons, and Edit buttons
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      
-      // Check if clicked element is a write or preview tab
-      if (target && (
-        target.classList.contains('write-tab') ||
-        target.classList.contains('preview-tab') ||
-        target.classList.contains('js-write-tab') ||
-        target.classList.contains('js-preview-tab')
-      )) {
-        console.log('Tab clicked:', target.className);
-        
-        // Delay to allow GitHub to update the tab states
-        setTimeout(() => {
-          console.log('Updating button after tab click');
-          this.addProcessButton();
-        }, 100);
-      }
-      
-      // Check if clicked element is a cancel button (more robust detection)
-      if (target && (
-        target.classList.contains('js-comment-cancel-button') ||
-        target.textContent?.trim().toLowerCase() === 'cancel' ||
-        target.getAttribute('data-cancel-text') === 'Cancel' ||
-        target.closest('button[data-cancel-text="Cancel"]') ||
-        target.closest('.js-comment-cancel-button')
-      )) {
-        console.log('Cancel button clicked:', target.className, target.textContent);
-        
-        // Delay to allow GitHub to exit edit mode
-        setTimeout(() => {
-          console.log('Updating button after cancel click');
-          this.addProcessButton();
-        }, 150); // Slightly longer delay
-      }
-      
-      // Check if clicked element is an edit button
-      if (target && target.classList.contains('js-comment-edit-button')) {
-        console.log('Edit button clicked');
-        
-        // Only update if button doesn't already exist (avoid duplicate creation)
-        if (!document.querySelector('#figma-process-btn')) {
-          // Delay to allow GitHub to enter edit mode
+    document.addEventListener(
+      "click",
+      (event) => {
+        const target = event.target;
+
+        // Check if clicked element is a write or preview tab
+        if (
+          target &&
+          (target.classList.contains("write-tab") ||
+            target.classList.contains("preview-tab") ||
+            target.classList.contains("js-write-tab") ||
+            target.classList.contains("js-preview-tab"))
+        ) {
+          console.log("Tab clicked:", target.className);
+
+          // Delay to allow GitHub to update the tab states
           setTimeout(() => {
-            console.log('Updating button after edit click');
+            console.log("Updating button after tab click");
             this.addProcessButton();
-          }, 200); // Slightly longer delay for edit mode to fully load
-        } else {
-          console.log('Button already exists, skipping duplicate creation');
+          }, 100);
         }
-      }
-    }, true); // Use capture phase to catch the event early
+
+        // Check if clicked element is a cancel button (more robust detection)
+        if (
+          target &&
+          (target.classList.contains("js-comment-cancel-button") ||
+            target.textContent?.trim().toLowerCase() === "cancel" ||
+            target.getAttribute("data-cancel-text") === "Cancel" ||
+            target.closest('button[data-cancel-text="Cancel"]') ||
+            target.closest(".js-comment-cancel-button"))
+        ) {
+          console.log(
+            "Cancel button clicked:",
+            target.className,
+            target.textContent,
+          );
+
+          // Delay to allow GitHub to exit edit mode
+          setTimeout(() => {
+            console.log("Updating button after cancel click");
+            this.addProcessButton();
+          }, 150); // Slightly longer delay
+        }
+
+        // Check if clicked element is an edit button
+        if (target && target.classList.contains("js-comment-edit-button")) {
+          console.log("Edit button clicked");
+
+          // Only update if button doesn't already exist (avoid duplicate creation)
+          if (!document.querySelector("#figma-process-btn")) {
+            // Delay to allow GitHub to enter edit mode
+            setTimeout(() => {
+              console.log("Updating button after edit click");
+              this.addProcessButton();
+            }, 200); // Slightly longer delay for edit mode to fully load
+          } else {
+            console.log("Button already exists, skipping duplicate creation");
+          }
+        }
+      },
+      true,
+    ); // Use capture phase to catch the event early
   }
 
   async processCurrentPR() {
     if (this.isProcessing) return;
-    
+
     this.isProcessing = true;
-    const button = document.querySelector('#figma-process-btn');
+    const button = document.querySelector("#figma-process-btn");
     if (button) {
       button.disabled = true;
-      button.innerHTML = '⏳ Processing...';
+      button.innerHTML = "⏳ Processing...";
     }
 
     try {
       // Get settings first
       const settings = await this.getSettings();
-      
+
       if (!settings.figmaToken) {
         this.showTokenPrompt();
         return;
       }
 
       // Get PR description textarea (not comment field)
-      const textarea = document.querySelector('#pull_request_body') ||
-                      document.querySelector('textarea[name="pull_request[body]"]');
-      
+      const textarea =
+        document.querySelector("#pull_request_body") ||
+        document.querySelector('textarea[name="pull_request[body]"]');
+
       if (!textarea) {
-        throw new Error('Could not find PR description textarea');
+        throw new Error("Could not find PR description textarea");
       }
 
       const originalText = textarea.value;
-      const processedText = await this.processFigmaLinks(originalText, settings);
-      
+      const processedText = await this.processFigmaLinks(
+        originalText,
+        settings,
+      );
+
       if (processedText === originalText) {
-        this.showInfo('No Figma links found to process.');
+        this.showInfo("No Figma links found to process.");
         return;
       }
 
       // Handle diff approval if enabled
       if (settings.diffApprovalEnabled) {
-        this.showDiffPreview(originalText, processedText, settings, (approvedText) => {
-          textarea.value = approvedText;
-          textarea.dispatchEvent(new Event('input', { bubbles: true }));
-          this.showSuccess('Changes applied successfully!');
-        });
+        this.showDiffPreview(
+          originalText,
+          processedText,
+          settings,
+          (approvedText) => {
+            textarea.value = approvedText;
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+            this.showSuccess("Changes applied successfully!");
+          },
+        );
       } else {
         // Apply changes directly
         textarea.value = processedText;
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        this.showSuccess('Figma links processed successfully!');
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        this.showSuccess("Figma links processed successfully!");
       }
-      
     } catch (error) {
-      console.error('Figma PR Extension error:', error);
+      console.error("Figma PR Extension error:", error);
       this.showError(`Error: ${error.message}`);
     } finally {
       this.isProcessing = false;
       if (button) {
         button.disabled = false;
-        button.innerHTML = '🎨 Process Figma Links';
+        button.innerHTML = "🎨 Process Figma Links";
       }
     }
   }
 
   async getSettings() {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.get(['figmaToken', 'specHeading', 'diffApprovalEnabled'], (result) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve({
-            figmaToken: result.figmaToken || null,
-            specHeading: result.specHeading || 'Design Specs',
-            diffApprovalEnabled: result.diffApprovalEnabled || false,
-          });
-        }
-      });
+      chrome.storage.sync.get(
+        ["figmaToken", "specHeading", "diffApprovalEnabled"],
+        (result) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve({
+              figmaToken: result.figmaToken || null,
+              specHeading: result.specHeading || "Design Specs",
+              diffApprovalEnabled: result.diffApprovalEnabled || false,
+            });
+          }
+        },
+      );
     });
   }
 
   async processFigmaLinks(text, settings) {
     // Find all Figma links
     const figmaLinks = this.findFigmaLinks(text);
-    
+
     if (figmaLinks.length === 0) {
       return text;
     }
@@ -439,7 +554,7 @@ class FigmaPRProcessor {
     let processedText = text;
     const designSpecs = [];
     let specCounter = this.getNextSpecNumber(text);
-    
+
     // Track existing specs by node ID and version to handle duplicates
     const existingSpecs = this.getExistingSpecsByNodeId(text);
     const nodeVersionToSpecNumber = new Map();
@@ -455,41 +570,45 @@ class FigmaPRProcessor {
         if (parsed.versionId) {
           version = createVersionFromId(parsed.versionId);
         } else {
-          version = await fetchLatestVersion(parsed.fileId, settings.figmaToken);
+          version = await fetchLatestVersion(
+            parsed.fileId,
+            settings.figmaToken,
+          );
         }
 
         const nodeVersionKey = `${parsed.fileId}:${parsed.nodeId}:${version.id}`;
-        
+
         // Check if this node ID + version already exists in existing specs
         if (existingSpecs[nodeVersionKey]) {
           const existingSpecNumber = existingSpecs[nodeVersionKey];
           const existingSpecId = `design-spec-${existingSpecNumber}`;
-          
+
           // Replace with reference to existing spec
           const referenceText = createReferenceText(
             link.isMarkdownLink,
             link.linkText,
             existingSpecNumber,
-            existingSpecId
+            existingSpecId,
           );
-          
+
           processedText = processedText.replace(link.fullMatch, referenceText);
           continue;
         }
-        
+
         // Check if this node ID + version was already processed in this run
         if (nodeVersionToSpecNumber.has(nodeVersionKey)) {
-          const existingSpecNumber = nodeVersionToSpecNumber.get(nodeVersionKey);
+          const existingSpecNumber =
+            nodeVersionToSpecNumber.get(nodeVersionKey);
           const existingSpecId = `design-spec-${existingSpecNumber}`;
-          
+
           // Replace with reference to spec being created in this run
           const referenceText = createReferenceText(
             link.isMarkdownLink,
             link.linkText,
             existingSpecNumber,
-            existingSpecId
+            existingSpecId,
           );
-          
+
           processedText = processedText.replace(link.fullMatch, referenceText);
           continue;
         }
@@ -498,13 +617,21 @@ class FigmaPRProcessor {
         nodeVersionToSpecNumber.set(nodeVersionKey, specCounter);
 
         // Get image URL
-        const imageUrl = await fetchNodeImageUrl(parsed.fileId, parsed.nodeId, settings.figmaToken);
-        
+        const imageUrl = await fetchNodeImageUrl(
+          parsed.fileId,
+          parsed.nodeId,
+          settings.figmaToken,
+        );
+
         // Create spec
         const specId = `design-spec-${specCounter}`;
-        const cleanUrl = createCleanFigmaUrl(parsed.fileId, parsed.nodeId, version.id);
+        const cleanUrl = createCleanFigmaUrl(
+          parsed.fileId,
+          parsed.nodeId,
+          version.id,
+        );
         const expirationDate = calculateImageExpirationDate();
-        
+
         const designSpec = createDesignSpecSnippet(
           specCounter,
           specId,
@@ -512,7 +639,7 @@ class FigmaPRProcessor {
           cleanUrl,
           version.id,
           version.created_at,
-          expirationDate
+          expirationDate,
         );
 
         designSpecs.push(designSpec);
@@ -522,12 +649,11 @@ class FigmaPRProcessor {
           link.isMarkdownLink,
           link.linkText,
           specCounter,
-          specId
+          specId,
         );
 
         processedText = processedText.replace(link.fullMatch, referenceText);
         specCounter++;
-
       } catch (error) {
         console.error(`Error processing link ${link.url}:`, error);
         this.showError(`Error processing link: ${error.message}`);
@@ -536,7 +662,11 @@ class FigmaPRProcessor {
 
     // Add design specs section
     if (designSpecs.length > 0) {
-      processedText = this.addDesignSpecsSection(processedText, designSpecs, settings.specHeading);
+      processedText = this.addDesignSpecsSection(
+        processedText,
+        designSpecs,
+        settings.specHeading,
+      );
     }
 
     return processedText;
@@ -548,13 +678,14 @@ class FigmaPRProcessor {
     // Remove all content between spec markers to avoid processing already processed links
     let cleanText = text;
     const specRegex = /<!-- START_SPEC_\d+ -->[\s\S]*?<!-- END_SPEC_\d+ -->/g;
-    cleanText = cleanText.replace(specRegex, '');
+    cleanText = cleanText.replace(specRegex, "");
 
     // Regex for standalone Figma URLs
     const standaloneRegex = /https:\/\/www\.figma\.com\/design\/[^)\s]+/g;
-    
+
     // Regex for markdown links with Figma URLs
-    const markdownRegex = /\[([^\]]+)\]\((https:\/\/www\.figma\.com\/design\/[^)]+)\)/g;
+    const markdownRegex =
+      /\[([^\]]+)\]\((https:\/\/www\.figma\.com\/design\/[^)]+)\)/g;
 
     // Find markdown links first
     let match;
@@ -563,18 +694,18 @@ class FigmaPRProcessor {
         url: match[2],
         fullMatch: match[0],
         isMarkdownLink: true,
-        linkText: match[1]
+        linkText: match[1],
       });
     }
 
     // Find standalone URLs (that aren't part of markdown links)
-    const textWithoutMarkdown = cleanText.replace(markdownRegex, '');
+    const textWithoutMarkdown = cleanText.replace(markdownRegex, "");
     while ((match = standaloneRegex.exec(textWithoutMarkdown)) !== null) {
       links.push({
         url: match[0],
         fullMatch: match[0],
         isMarkdownLink: false,
-        linkText: null
+        linkText: null,
       });
     }
 
@@ -585,20 +716,21 @@ class FigmaPRProcessor {
     const specRegex = /<!-- START_SPEC_(\d+) -->/g;
     let maxNumber = 0;
     let match;
-    
+
     while ((match = specRegex.exec(text)) !== null) {
       const number = parseInt(match[1], 10);
       if (number > maxNumber) {
         maxNumber = number;
       }
     }
-    
+
     return maxNumber + 1;
   }
 
   getExistingSpecsByNodeId(text) {
     const existingSpecs = {};
-    const specRegex = /<!-- START_SPEC_(\d+) -->[\s\S]*?\*\*Design Link:\*\* \[View in Figma\]\(https:\/\/www\.figma\.com\/design\/([^/]+)\/\?node-id=([^&]+)&[^)]*version-id=([^&)]+)/g;
+    const specRegex =
+      /<!-- START_SPEC_(\d+) -->[\s\S]*?\*\*Design Link:\*\* \[View in Figma\]\(https:\/\/www\.figma\.com\/design\/([^/]+)\/\?node-id=([^&]+)&[^)]*version-id=([^&)]+)/g;
     let match;
 
     while ((match = specRegex.exec(text)) !== null) {
@@ -613,58 +745,95 @@ class FigmaPRProcessor {
     return existingSpecs;
   }
 
-  addDesignSpecsSection(text, designSpecs, customHeading = 'Design Specs') {
+  addDesignSpecsSection(text, designSpecs, customHeading = "Design Specs") {
     const startMarker = `<!-- START_FIGMA_SECTION -->`;
     const endMarker = `<!-- END_FIGMA_SECTION - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
-    
+
     // First, check if START_FIGMA_SECTION marker exists
     const startMarkerIndex = text.indexOf(startMarker);
     const endMarkerIndex = text.indexOf(endMarker);
-    
+
     if (startMarkerIndex > -1 && endMarkerIndex > startMarkerIndex) {
       // Markers exist, insert before end marker
       const beforeEnd = text.substring(0, endMarkerIndex);
       const afterEnd = text.substring(endMarkerIndex);
-      return beforeEnd + designSpecs.join('\n') + '\n' + afterEnd;
+      return beforeEnd + designSpecs.join("\n") + "\n" + afterEnd;
     } else if (startMarkerIndex > -1) {
       // Start marker exists but no end marker, add end marker
       const afterStart = text.substring(startMarkerIndex);
       const beforeStart = text.substring(0, startMarkerIndex);
-      return beforeStart + startMarker + '\n\n## ' + customHeading + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + afterStart.substring(startMarker.length);
+      return (
+        beforeStart +
+        startMarker +
+        "\n\n## " +
+        customHeading +
+        "\n\n" +
+        designSpecs.join("\n") +
+        "\n\n" +
+        endMarker +
+        afterStart.substring(startMarker.length)
+      );
     } else {
       // No markers exist, check if custom heading section exists
-      const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const designSpecsRegex = new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
+      const escapedHeading = customHeading.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      );
+      const designSpecsRegex = new RegExp(
+        `^#{1,6}\\s*${escapedHeading}\\s*$`,
+        "im",
+      );
       const headingMatch = text.match(designSpecsRegex);
-      
+
       if (headingMatch) {
         // Heading exists, add start marker before it
         const headingIndex = text.indexOf(headingMatch[0]);
         const before = text.substring(0, headingIndex);
         const after = text.substring(headingIndex);
-        return before + startMarker + '\n' + after.substring(0, after.indexOf(headingMatch[0]) + headingMatch[0].length) + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + after.substring(after.indexOf(headingMatch[0]) + headingMatch[0].length);
+        return (
+          before +
+          startMarker +
+          "\n" +
+          after.substring(
+            0,
+            after.indexOf(headingMatch[0]) + headingMatch[0].length,
+          ) +
+          "\n\n" +
+          designSpecs.join("\n") +
+          "\n\n" +
+          endMarker +
+          after.substring(
+            after.indexOf(headingMatch[0]) + headingMatch[0].length,
+          )
+        );
       } else {
         // Create new section with markers at the end
-        return text + `\n\n${startMarker}\n## ${customHeading}\n\n` + designSpecs.join('\n') + '\n\n' + endMarker;
+        return (
+          text +
+          `\n\n${startMarker}\n## ${customHeading}\n\n` +
+          designSpecs.join("\n") +
+          "\n\n" +
+          endMarker
+        );
       }
     }
   }
 
   showSuccess(message) {
-    this.showNotification(message, 'success');
+    this.showNotification(message, "success");
   }
 
   showError(message) {
-    this.showNotification(message, 'error');
+    this.showNotification(message, "error");
   }
 
   showInfo(message) {
-    this.showNotification(message, 'info');
+    this.showNotification(message, "info");
   }
 
   showTokenPrompt() {
     // Create a more prominent modal-style prompt
-    const overlay = document.createElement('div');
+    const overlay = document.createElement("div");
     overlay.style.cssText = `
       position: fixed;
       top: 0;
@@ -678,7 +847,7 @@ class FigmaPRProcessor {
       justify-content: center;
     `;
 
-    const modal = document.createElement('div');
+    const modal = document.createElement("div");
     modal.style.cssText = `
       background: white;
       border-radius: 8px;
@@ -723,23 +892,29 @@ class FigmaPRProcessor {
     document.body.appendChild(overlay);
 
     // Set the extension icon dynamically based on browser
-    const iconImg = modal.querySelector('#extension-icon');
-    const extensionId = typeof chrome !== 'undefined' && chrome.runtime ? chrome.runtime.id : 
-                       typeof browser !== 'undefined' && browser.runtime ? browser.runtime.id : null;
-    
+    const iconImg = modal.querySelector("#extension-icon");
+    const extensionId =
+      typeof chrome !== "undefined" && chrome.runtime
+        ? chrome.runtime.id
+        : typeof browser !== "undefined" && browser.runtime
+          ? browser.runtime.id
+          : null;
+
     if (extensionId) {
-      const iconUrl = typeof chrome !== 'undefined' ? 
-        `chrome-extension://${extensionId}/icons/icon-48.png` :
-        `moz-extension://${extensionId}/icons/icon-48.png`;
+      const iconUrl =
+        typeof chrome !== "undefined"
+          ? `chrome-extension://${extensionId}/icons/icon-48.png`
+          : `moz-extension://${extensionId}/icons/icon-48.png`;
       iconImg.src = iconUrl;
     } else {
       // Fallback to emoji if extension URL not available
-      iconImg.style.display = 'none';
-      iconImg.parentElement.innerHTML = '<div style="margin-bottom: 16px; font-size: 32px;">🎨</div>';
+      iconImg.style.display = "none";
+      iconImg.parentElement.innerHTML =
+        '<div style="margin-bottom: 16px; font-size: 32px;">🎨</div>';
     }
 
     // Handle button clicks
-    modal.querySelector('#config-token-btn').addEventListener('click', () => {
+    modal.querySelector("#config-token-btn").addEventListener("click", () => {
       // Open extension popup (not possible in all browsers)
       // Instead, show instructions
       modal.innerHTML = `
@@ -765,17 +940,19 @@ class FigmaPRProcessor {
         ">Got it!</button>
       `;
 
-      modal.querySelector('#close-instructions-btn').addEventListener('click', () => {
-        document.body.removeChild(overlay);
-      });
+      modal
+        .querySelector("#close-instructions-btn")
+        .addEventListener("click", () => {
+          document.body.removeChild(overlay);
+        });
     });
 
-    modal.querySelector('#cancel-token-btn').addEventListener('click', () => {
+    modal.querySelector("#cancel-token-btn").addEventListener("click", () => {
       document.body.removeChild(overlay);
     });
 
     // Close on overlay click
-    overlay.addEventListener('click', (e) => {
+    overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
       }
@@ -784,7 +961,7 @@ class FigmaPRProcessor {
 
   showNotification(message, type) {
     // Create notification element
-    const notification = document.createElement('div');
+    const notification = document.createElement("div");
     notification.style.cssText = `
       position: fixed;
       top: 20px;
@@ -797,18 +974,18 @@ class FigmaPRProcessor {
       max-width: 400px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     `;
-    
+
     const colors = {
-      success: '#28a745',
-      error: '#dc3545',
-      info: '#17a2b8'
+      success: "#28a745",
+      error: "#dc3545",
+      info: "#17a2b8",
     };
-    
+
     notification.style.backgroundColor = colors[type] || colors.info;
     notification.textContent = message;
-    
+
     document.body.appendChild(notification);
-    
+
     // Auto remove after 5 seconds
     setTimeout(() => {
       if (notification.parentNode) {
@@ -818,13 +995,18 @@ class FigmaPRProcessor {
   }
 
   showDiffPreview(originalText, newText, settings, onApprove) {
-    const modal = createDiffPreviewModal(originalText, newText, onApprove, this);
+    const modal = createDiffPreviewModal(
+      originalText,
+      newText,
+      onApprove,
+      this,
+    );
     document.body.appendChild(modal);
   }
 
   createDiffPreviewModal(originalText, newText, onApprove) {
     // Create modal overlay
-    const overlay = document.createElement('div');
+    const overlay = document.createElement("div");
     overlay.style.cssText = `
       position: fixed;
       top: 0;
@@ -837,9 +1019,9 @@ class FigmaPRProcessor {
       align-items: center;
       justify-content: center;
     `;
-    
+
     // Create modal content
-    const modal = document.createElement('div');
+    const modal = document.createElement("div");
     modal.style.cssText = `
       background: white;
       border-radius: 8px;
@@ -850,35 +1032,36 @@ class FigmaPRProcessor {
       flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     `;
-    
+
     // Create header
-    const header = document.createElement('div');
+    const header = document.createElement("div");
     header.style.cssText = `
       padding: 16px 24px;
       border-bottom: 1px solid #e1e4e8;
       background: #f6f8fa;
     `;
-    header.innerHTML = '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
-    
+    header.innerHTML =
+      '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+
     // Create split pane container
-    const splitContainer = document.createElement('div');
+    const splitContainer = document.createElement("div");
     splitContainer.style.cssText = `
       flex: 1;
       display: flex;
       overflow: hidden;
       position: relative;
     `;
-    
+
     // Create left pane (original content)
-    const leftPane = document.createElement('div');
+    const leftPane = document.createElement("div");
     leftPane.style.cssText = `
       width: 50%;
       display: flex;
       flex-direction: column;
       border-right: 1px solid #e1e4e8;
     `;
-    
-    const leftHeader = document.createElement('div');
+
+    const leftHeader = document.createElement("div");
     leftHeader.style.cssText = `
       padding: 12px 16px;
       background: #f6f8fa;
@@ -887,9 +1070,9 @@ class FigmaPRProcessor {
       color: #24292e;
       font-size: 14px;
     `;
-    leftHeader.textContent = 'Original Content';
-    
-    const leftContent = document.createElement('textarea');
+    leftHeader.textContent = "Original Content";
+
+    const leftContent = document.createElement("textarea");
     leftContent.style.cssText = `
       flex: 1;
       padding: 16px;
@@ -904,12 +1087,12 @@ class FigmaPRProcessor {
     `;
     leftContent.value = originalText;
     leftContent.readOnly = true;
-    
+
     leftPane.appendChild(leftHeader);
     leftPane.appendChild(leftContent);
-    
+
     // Create resize handle
-    const resizeHandle = document.createElement('div');
+    const resizeHandle = document.createElement("div");
     resizeHandle.style.cssText = `
       width: 4px;
       background: #e1e4e8;
@@ -922,41 +1105,41 @@ class FigmaPRProcessor {
       transform: translateX(-2px);
       z-index: 10;
     `;
-    
-    resizeHandle.addEventListener('mouseenter', () => {
-      resizeHandle.style.background = '#0969da';
+
+    resizeHandle.addEventListener("mouseenter", () => {
+      resizeHandle.style.background = "#0969da";
     });
-    
-    resizeHandle.addEventListener('mouseleave', () => {
-      resizeHandle.style.background = '#e1e4e8';
+
+    resizeHandle.addEventListener("mouseleave", () => {
+      resizeHandle.style.background = "#e1e4e8";
     });
-    
+
     // Create right pane (new content - editable)
-    const rightPane = document.createElement('div');
+    const rightPane = document.createElement("div");
     rightPane.style.cssText = `
       flex: 1;
       display: flex;
       flex-direction: column;
     `;
-    
+
     // Create tab header for right pane
-    const rightHeader = document.createElement('div');
+    const rightHeader = document.createElement("div");
     rightHeader.style.cssText = `
       background: #f6f8fa;
       border-bottom: 1px solid #e1e4e8;
       display: flex;
       align-items: center;
     `;
-    
+
     // Create tab navigation
-    const tabNav = document.createElement('div');
+    const tabNav = document.createElement("div");
     tabNav.style.cssText = `
       display: flex;
       flex: 1;
     `;
-    
-    const editTab = document.createElement('button');
-    editTab.textContent = 'Edit';
+
+    const editTab = document.createElement("button");
+    editTab.textContent = "Edit";
     editTab.style.cssText = `
       padding: 12px 16px;
       background: white;
@@ -967,10 +1150,10 @@ class FigmaPRProcessor {
       font-size: 14px;
       cursor: pointer;
     `;
-    editTab.classList.add('active-tab');
-    
-    const previewTab = document.createElement('button');
-    previewTab.textContent = 'Preview';
+    editTab.classList.add("active-tab");
+
+    const previewTab = document.createElement("button");
+    previewTab.textContent = "Preview";
     previewTab.style.cssText = `
       padding: 12px 16px;
       background: #f6f8fa;
@@ -981,20 +1164,20 @@ class FigmaPRProcessor {
       font-size: 14px;
       cursor: pointer;
     `;
-    
+
     tabNav.appendChild(editTab);
     tabNav.appendChild(previewTab);
     rightHeader.appendChild(tabNav);
-    
+
     // Create content container for tabs
-    const rightContentContainer = document.createElement('div');
+    const rightContentContainer = document.createElement("div");
     rightContentContainer.style.cssText = `
       flex: 1;
       display: flex;
       flex-direction: column;
     `;
-    
-    const rightContent = document.createElement('textarea');
+
+    const rightContent = document.createElement("textarea");
     rightContent.style.cssText = `
       flex: 1;
       padding: 16px;
@@ -1008,9 +1191,9 @@ class FigmaPRProcessor {
       display: block;
     `;
     rightContent.value = newText;
-    
+
     // Create preview content container
-    const previewContent = document.createElement('div');
+    const previewContent = document.createElement("div");
     previewContent.style.cssText = `
       flex: 1;
       padding: 16px;
@@ -1019,12 +1202,12 @@ class FigmaPRProcessor {
       display: none;
     `;
     previewContent.innerHTML = this.renderMarkdown(newText);
-    
+
     rightContentContainer.appendChild(rightContent);
     rightContentContainer.appendChild(previewContent);
-    
+
     // Tab switching logic
-    editTab.addEventListener('click', () => {
+    editTab.addEventListener("click", () => {
       editTab.style.cssText = `
         padding: 12px 16px;
         background: white;
@@ -1045,11 +1228,11 @@ class FigmaPRProcessor {
         font-size: 14px;
         cursor: pointer;
       `;
-      rightContent.style.display = 'block';
-      previewContent.style.display = 'none';
+      rightContent.style.display = "block";
+      previewContent.style.display = "none";
     });
-    
-    previewTab.addEventListener('click', () => {
+
+    previewTab.addEventListener("click", () => {
       previewTab.style.cssText = `
         padding: 12px 16px;
         background: white;
@@ -1070,21 +1253,21 @@ class FigmaPRProcessor {
         font-size: 14px;
         cursor: pointer;
       `;
-      rightContent.style.display = 'none';
-      previewContent.style.display = 'block';
+      rightContent.style.display = "none";
+      previewContent.style.display = "block";
       // Update preview content when switching to preview tab
       previewContent.innerHTML = this.renderMarkdown(rightContent.value);
     });
-    
+
     // Update preview when content changes in edit mode
-    rightContent.addEventListener('input', () => {
-      if (previewContent.style.display === 'block') {
+    rightContent.addEventListener("input", () => {
+      if (previewContent.style.display === "block") {
         previewContent.innerHTML = this.renderMarkdown(rightContent.value);
       }
     });
-    
+
     // Create copy buttons container (below right pane)
-    const copyButtonsContainer = document.createElement('div');
+    const copyButtonsContainer = document.createElement("div");
     copyButtonsContainer.style.cssText = `
       padding: 12px 16px;
       border-top: 1px solid #e1e4e8;
@@ -1092,60 +1275,63 @@ class FigmaPRProcessor {
       display: flex;
       gap: 8px;
     `;
-    
+
     // Create copy buttons
-    const copyFullBtn = this.createStyledButton('Copy Full Content', 'copy');
-    const copySpecsBtn = this.createStyledButton('Copy Figma Section', 'copy');
-    
+    const copyFullBtn = this.createStyledButton("Copy Full Content", "copy");
+    const copySpecsBtn = this.createStyledButton("Copy Figma Section", "copy");
+
     copyButtonsContainer.appendChild(copyFullBtn);
     copyButtonsContainer.appendChild(copySpecsBtn);
-    
+
     rightPane.appendChild(rightHeader);
     rightPane.appendChild(rightContentContainer);
     rightPane.appendChild(copyButtonsContainer);
-    
+
     // Add resize functionality
     let isResizing = false;
     let startX = 0;
     let startLeftWidth = 0;
-    
-    resizeHandle.addEventListener('mousedown', (e) => {
+
+    resizeHandle.addEventListener("mousedown", (e) => {
       isResizing = true;
       startX = e.clientX;
       startLeftWidth = leftPane.offsetWidth;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
       e.preventDefault();
     });
-    
-    document.addEventListener('mousemove', (e) => {
+
+    document.addEventListener("mousemove", (e) => {
       if (!isResizing) return;
-      
+
       const deltaX = e.clientX - startX;
       const containerWidth = splitContainer.offsetWidth;
       const newLeftWidth = startLeftWidth + deltaX;
-      const leftPercentage = Math.max(20, Math.min(80, (newLeftWidth / containerWidth) * 100));
-      
+      const leftPercentage = Math.max(
+        20,
+        Math.min(80, (newLeftWidth / containerWidth) * 100),
+      );
+
       leftPane.style.width = `${leftPercentage}%`;
       rightPane.style.width = `${100 - leftPercentage}%`;
       resizeHandle.style.left = `${leftPercentage}%`;
     });
-    
-    document.addEventListener('mouseup', () => {
+
+    document.addEventListener("mouseup", () => {
       if (isResizing) {
         isResizing = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
       }
     });
-    
+
     splitContainer.appendChild(leftPane);
     splitContainer.appendChild(resizeHandle);
     splitContainer.appendChild(rightPane);
-    
+
     // Create footer with action buttons
-    const footer = document.createElement('div');
+    const footer = document.createElement("div");
     footer.style.cssText = `
       padding: 16px 24px;
       border-top: 1px solid #e1e4e8;
@@ -1154,59 +1340,59 @@ class FigmaPRProcessor {
       gap: 12px;
       justify-content: flex-end;
     `;
-    
-    const cancelBtn = this.createStyledButton('Cancel', 'cancel');
-    const approveBtn = this.createStyledButton('Approve & Apply', 'approve');
-    
+
+    const cancelBtn = this.createStyledButton("Cancel", "cancel");
+    const approveBtn = this.createStyledButton("Approve & Apply", "approve");
+
     footer.appendChild(cancelBtn);
     footer.appendChild(approveBtn);
-    
+
     // Add event listeners
-    copyFullBtn.addEventListener('click', () => {
+    copyFullBtn.addEventListener("click", () => {
       navigator.clipboard.writeText(rightContent.value);
-      this.showButtonFeedback(copyFullBtn, 'Copied!');
+      this.showButtonFeedback(copyFullBtn, "Copied!");
     });
-    
-    copySpecsBtn.addEventListener('click', () => {
+
+    copySpecsBtn.addEventListener("click", () => {
       const currentText = rightContent.value;
       const specsSection = this.extractSpecsSection(currentText);
-      
+
       if (specsSection) {
         navigator.clipboard.writeText(specsSection);
-        this.showButtonFeedback(copySpecsBtn, 'Copied!');
+        this.showButtonFeedback(copySpecsBtn, "Copied!");
       } else {
-        this.showError('No specs section found');
+        this.showError("No specs section found");
       }
     });
-    
-    cancelBtn.addEventListener('click', () => {
+
+    cancelBtn.addEventListener("click", () => {
       document.body.removeChild(overlay);
-      this.showInfo('Changes cancelled');
+      this.showInfo("Changes cancelled");
     });
-    
-    approveBtn.addEventListener('click', () => {
+
+    approveBtn.addEventListener("click", () => {
       document.body.removeChild(overlay);
       onApprove(rightContent.value);
     });
-    
+
     // Assemble modal
     modal.appendChild(header);
     modal.appendChild(splitContainer);
     modal.appendChild(footer);
-    
+
     overlay.appendChild(modal);
-    
+
     return overlay;
   }
 
   createStyledButton(text, type) {
-    const button = document.createElement('button');
+    const button = document.createElement("button");
     button.textContent = text;
-    
+
     let baseStyles, hoverStyles;
-    
+
     switch (type) {
-      case 'copy':
+      case "copy":
         baseStyles = `
           padding: 6px 12px;
           border: 1px solid #d0d7de;
@@ -1217,10 +1403,10 @@ class FigmaPRProcessor {
           font-size: 12px;
           transition: all 0.2s ease;
         `;
-        hoverStyles = 'background: #f6f8fa; border-color: #8c959f;';
+        hoverStyles = "background: #f6f8fa; border-color: #8c959f;";
         break;
-        
-      case 'cancel':
+
+      case "cancel":
         baseStyles = `
           padding: 8px 16px;
           border: 1px solid #da3633;
@@ -1231,10 +1417,10 @@ class FigmaPRProcessor {
           font-size: 14px;
           transition: all 0.2s ease;
         `;
-        hoverStyles = 'background: #da3633; color: white;';
+        hoverStyles = "background: #da3633; color: white;";
         break;
-        
-      case 'approve':
+
+      case "approve":
         baseStyles = `
           padding: 8px 16px;
           border: 1px solid #1f883d;
@@ -1245,50 +1431,51 @@ class FigmaPRProcessor {
           font-size: 14px;
           transition: all 0.2s ease;
         `;
-        hoverStyles = 'background: #1a7f37; border-color: #1a7f37;';
+        hoverStyles = "background: #1a7f37; border-color: #1a7f37;";
         break;
     }
-    
+
     button.style.cssText = baseStyles;
-    
-    button.addEventListener('mouseenter', () => {
+
+    button.addEventListener("mouseenter", () => {
       button.style.cssText = baseStyles + hoverStyles;
     });
-    
-    button.addEventListener('mouseleave', () => {
+
+    button.addEventListener("mouseleave", () => {
       button.style.cssText = baseStyles;
     });
-    
+
     return button;
   }
 
   showButtonFeedback(button, message) {
     const originalText = button.textContent;
     button.textContent = message;
-    button.style.background = '#1f883d';
-    button.style.color = 'white';
-    button.style.borderColor = '#1f883d';
-    
+    button.style.background = "#1f883d";
+    button.style.color = "white";
+    button.style.borderColor = "#1f883d";
+
     setTimeout(() => {
       button.textContent = originalText;
-      button.style.background = 'white';
-      button.style.color = '#24292e';
-      button.style.borderColor = '#d0d7de';
+      button.style.background = "white";
+      button.style.color = "#24292e";
+      button.style.borderColor = "#d0d7de";
     }, 1500);
   }
 
   extractSpecsSection(text) {
     const startMarker = `<!-- START_FIGMA_SECTION -->`;
     const endMarker = `<!-- END_FIGMA_SECTION`;
-    
+
     const startIndex = text.indexOf(startMarker);
     const endMarkerIndex = text.indexOf(endMarker);
-    
+
     if (startIndex > -1 && endMarkerIndex > startIndex) {
-      const endPos = endMarkerIndex + text.substring(endMarkerIndex).indexOf('-->') + 3;
+      const endPos =
+        endMarkerIndex + text.substring(endMarkerIndex).indexOf("-->") + 3;
       return text.substring(startIndex, endPos);
     }
-    
+
     return null;
   }
 
@@ -1341,7 +1528,7 @@ class FigmaPRProcessor {
 
 function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create modal overlay
-  const overlay = document.createElement('div');
+  const overlay = document.createElement("div");
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -1354,9 +1541,9 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     align-items: center;
     justify-content: center;
   `;
-  
+
   // Create modal content
-  const modal = document.createElement('div');
+  const modal = document.createElement("div");
   modal.style.cssText = `
     background: white;
     border-radius: 8px;
@@ -1367,35 +1554,36 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   `;
-  
+
   // Create header
-  const header = document.createElement('div');
+  const header = document.createElement("div");
   header.style.cssText = `
     padding: 16px 24px;
     border-bottom: 1px solid #e1e4e8;
     background: #f6f8fa;
   `;
-  header.innerHTML = '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
-  
+  header.innerHTML =
+    '<h3 style="margin: 0; color: #24292e;">Review Changes</h3>';
+
   // Create split pane container
-  const splitContainer = document.createElement('div');
+  const splitContainer = document.createElement("div");
   splitContainer.style.cssText = `
     flex: 1;
     display: flex;
     overflow: hidden;
     position: relative;
   `;
-  
+
   // Create left pane (original content)
-  const leftPane = document.createElement('div');
+  const leftPane = document.createElement("div");
   leftPane.style.cssText = `
     width: 50%;
     display: flex;
     flex-direction: column;
     border-right: 1px solid #e1e4e8;
   `;
-  
-  const leftHeader = document.createElement('div');
+
+  const leftHeader = document.createElement("div");
   leftHeader.style.cssText = `
     padding: 12px 16px;
     background: #f6f8fa;
@@ -1404,9 +1592,9 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     color: #24292e;
     font-size: 14px;
   `;
-  leftHeader.textContent = 'Original Content';
-  
-  const leftContent = document.createElement('textarea');
+  leftHeader.textContent = "Original Content";
+
+  const leftContent = document.createElement("textarea");
   leftContent.style.cssText = `
     flex: 1;
     padding: 16px;
@@ -1421,12 +1609,12 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   `;
   leftContent.value = originalText;
   leftContent.readOnly = true;
-  
+
   leftPane.appendChild(leftHeader);
   leftPane.appendChild(leftContent);
-  
+
   // Create resize handle
-  const resizeHandle = document.createElement('div');
+  const resizeHandle = document.createElement("div");
   resizeHandle.style.cssText = `
     width: 4px;
     background: #e1e4e8;
@@ -1439,41 +1627,41 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     transform: translateX(-2px);
     z-index: 10;
   `;
-  
-  resizeHandle.addEventListener('mouseenter', () => {
-    resizeHandle.style.background = '#0969da';
+
+  resizeHandle.addEventListener("mouseenter", () => {
+    resizeHandle.style.background = "#0969da";
   });
-  
-  resizeHandle.addEventListener('mouseleave', () => {
-    resizeHandle.style.background = '#e1e4e8';
+
+  resizeHandle.addEventListener("mouseleave", () => {
+    resizeHandle.style.background = "#e1e4e8";
   });
-  
+
   // Create right pane (new content - editable)
-  const rightPane = document.createElement('div');
+  const rightPane = document.createElement("div");
   rightPane.style.cssText = `
     flex: 1;
     display: flex;
     flex-direction: column;
   `;
-  
+
   // Create tab header for right pane
-  const rightHeader = document.createElement('div');
+  const rightHeader = document.createElement("div");
   rightHeader.style.cssText = `
     background: #f6f8fa;
     border-bottom: 1px solid #e1e4e8;
     display: flex;
     align-items: center;
   `;
-  
+
   // Create tab navigation
-  const tabNav = document.createElement('div');
+  const tabNav = document.createElement("div");
   tabNav.style.cssText = `
     display: flex;
     flex: 1;
   `;
-  
-  const editTab = document.createElement('button');
-  editTab.textContent = 'Edit';
+
+  const editTab = document.createElement("button");
+  editTab.textContent = "Edit";
   editTab.style.cssText = `
     padding: 12px 16px;
     background: white;
@@ -1484,10 +1672,10 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     font-size: 14px;
     cursor: pointer;
   `;
-  editTab.classList.add('active-tab');
-  
-  const previewTab = document.createElement('button');
-  previewTab.textContent = 'Preview';
+  editTab.classList.add("active-tab");
+
+  const previewTab = document.createElement("button");
+  previewTab.textContent = "Preview";
   previewTab.style.cssText = `
     padding: 12px 16px;
     background: #f6f8fa;
@@ -1498,20 +1686,20 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     font-size: 14px;
     cursor: pointer;
   `;
-  
+
   tabNav.appendChild(editTab);
   tabNav.appendChild(previewTab);
   rightHeader.appendChild(tabNav);
-  
+
   // Create content container for tabs
-  const rightContentContainer = document.createElement('div');
+  const rightContentContainer = document.createElement("div");
   rightContentContainer.style.cssText = `
     flex: 1;
     display: flex;
     flex-direction: column;
   `;
-  
-  const rightContent = document.createElement('textarea');
+
+  const rightContent = document.createElement("textarea");
   rightContent.style.cssText = `
     flex: 1;
     padding: 16px;
@@ -1525,9 +1713,9 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     display: block;
   `;
   rightContent.value = newText;
-  
+
   // Create preview content container
-  const previewContent = document.createElement('div');
+  const previewContent = document.createElement("div");
   previewContent.style.cssText = `
     flex: 1;
     padding: 16px;
@@ -1536,12 +1724,12 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     display: none;
   `;
   previewContent.innerHTML = context.renderMarkdown(newText);
-  
+
   rightContentContainer.appendChild(rightContent);
   rightContentContainer.appendChild(previewContent);
-  
+
   // Tab switching logic
-  editTab.addEventListener('click', () => {
+  editTab.addEventListener("click", () => {
     editTab.style.cssText = `
       padding: 12px 16px;
       background: white;
@@ -1562,11 +1750,11 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
       font-size: 14px;
       cursor: pointer;
     `;
-    rightContent.style.display = 'block';
-    previewContent.style.display = 'none';
+    rightContent.style.display = "block";
+    previewContent.style.display = "none";
   });
-  
-  previewTab.addEventListener('click', () => {
+
+  previewTab.addEventListener("click", () => {
     previewTab.style.cssText = `
       padding: 12px 16px;
       background: white;
@@ -1587,21 +1775,21 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
       font-size: 14px;
       cursor: pointer;
     `;
-    rightContent.style.display = 'none';
-    previewContent.style.display = 'block';
+    rightContent.style.display = "none";
+    previewContent.style.display = "block";
     // Update preview content when switching to preview tab
     previewContent.innerHTML = context.renderMarkdown(rightContent.value);
   });
-  
+
   // Update preview when content changes in edit mode
-  rightContent.addEventListener('input', () => {
-    if (previewContent.style.display === 'block') {
+  rightContent.addEventListener("input", () => {
+    if (previewContent.style.display === "block") {
       previewContent.innerHTML = context.renderMarkdown(rightContent.value);
     }
   });
-  
+
   // Create copy buttons container (below right pane)
-  const copyButtonsContainer = document.createElement('div');
+  const copyButtonsContainer = document.createElement("div");
   copyButtonsContainer.style.cssText = `
     padding: 12px 16px;
     border-top: 1px solid #e1e4e8;
@@ -1609,60 +1797,63 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     display: flex;
     gap: 8px;
   `;
-  
+
   // Create copy buttons
-  const copyFullBtn = createStyledButton('Copy Full Content', 'copy');
-  const copySpecsBtn = createStyledButton('Copy Figma Section', 'copy');
-  
+  const copyFullBtn = createStyledButton("Copy Full Content", "copy");
+  const copySpecsBtn = createStyledButton("Copy Figma Section", "copy");
+
   copyButtonsContainer.appendChild(copyFullBtn);
   copyButtonsContainer.appendChild(copySpecsBtn);
-  
+
   rightPane.appendChild(rightHeader);
   rightPane.appendChild(rightContentContainer);
   rightPane.appendChild(copyButtonsContainer);
-  
+
   // Add resize functionality
   let isResizing = false;
   let startX = 0;
   let startLeftWidth = 0;
-  
-  resizeHandle.addEventListener('mousedown', (e) => {
+
+  resizeHandle.addEventListener("mousedown", (e) => {
     isResizing = true;
     startX = e.clientX;
     startLeftWidth = leftPane.offsetWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
     e.preventDefault();
   });
-  
-  document.addEventListener('mousemove', (e) => {
+
+  document.addEventListener("mousemove", (e) => {
     if (!isResizing) return;
-    
+
     const deltaX = e.clientX - startX;
     const containerWidth = splitContainer.offsetWidth;
     const newLeftWidth = startLeftWidth + deltaX;
-    const leftPercentage = Math.max(20, Math.min(80, (newLeftWidth / containerWidth) * 100));
-    
+    const leftPercentage = Math.max(
+      20,
+      Math.min(80, (newLeftWidth / containerWidth) * 100),
+    );
+
     leftPane.style.width = `${leftPercentage}%`;
     rightPane.style.width = `${100 - leftPercentage}%`;
     resizeHandle.style.left = `${leftPercentage}%`;
   });
-  
-  document.addEventListener('mouseup', () => {
+
+  document.addEventListener("mouseup", () => {
     if (isResizing) {
       isResizing = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     }
   });
-  
+
   splitContainer.appendChild(leftPane);
   splitContainer.appendChild(resizeHandle);
   splitContainer.appendChild(rightPane);
-  
+
   // Create footer with action buttons
-  const footer = document.createElement('div');
+  const footer = document.createElement("div");
   footer.style.cssText = `
     padding: 16px 24px;
     border-top: 1px solid #e1e4e8;
@@ -1671,55 +1862,54 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     gap: 12px;
     justify-content: flex-end;
   `;
-  
-  const cancelBtn = createStyledButton('Cancel', 'cancel');
-  const approveBtn = createStyledButton('Approve & Apply', 'approve');
-  
+
+  const cancelBtn = createStyledButton("Cancel", "cancel");
+  const approveBtn = createStyledButton("Approve & Apply", "approve");
+
   footer.appendChild(cancelBtn);
   footer.appendChild(approveBtn);
-  
+
   // Add event listeners
-  copyFullBtn.addEventListener('click', () => {
+  copyFullBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(rightContent.value);
-    showButtonFeedback(copyFullBtn, 'Copied!');
+    showButtonFeedback(copyFullBtn, "Copied!");
   });
-  
-  copySpecsBtn.addEventListener('click', () => {
+
+  copySpecsBtn.addEventListener("click", () => {
     const currentText = rightContent.value;
     const specsSection = context.extractSpecsSection(currentText);
-    
+
     if (specsSection) {
       navigator.clipboard.writeText(specsSection);
-      showButtonFeedback(copySpecsBtn, 'Copied!');
+      showButtonFeedback(copySpecsBtn, "Copied!");
     } else {
-      context.showError('No specs section found');
+      context.showError("No specs section found");
     }
   });
-  
-  cancelBtn.addEventListener('click', () => {
+
+  cancelBtn.addEventListener("click", () => {
     document.body.removeChild(overlay);
-    context.showInfo('Changes cancelled');
+    context.showInfo("Changes cancelled");
   });
-  
-  approveBtn.addEventListener('click', () => {
+
+  approveBtn.addEventListener("click", () => {
     document.body.removeChild(overlay);
     onApprove(rightContent.value);
   });
-  
+
   // Assemble modal
   modal.appendChild(header);
   modal.appendChild(splitContainer);
   modal.appendChild(footer);
-  
+
   overlay.appendChild(modal);
-  
+
   return overlay;
 }
 
-
 // Initialize when page loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => new FigmaPRProcessor());
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => new FigmaPRProcessor());
 } else {
   new FigmaPRProcessor();
 }

@@ -1,6 +1,6 @@
 {
   "name": "figma-pr-browser-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Browser extension that processes Figma links in GitHub PR descriptions",
   "scripts": {
     "build": "node build.js",
@@ -9,7 +9,13 @@
     "clean": "node build.js clean",
     "dev": "node build.js && echo 'Built both extensions. Load the chrome/ or firefox/ directory in your browser.'"
   },
-  "keywords": ["figma", "github", "browser-extension", "chrome", "firefox"],
+  "keywords": [
+    "figma",
+    "github",
+    "browser-extension",
+    "chrome",
+    "firefox"
+  ],
   "author": "wildmat",
   "license": "MIT",
   "engines": {

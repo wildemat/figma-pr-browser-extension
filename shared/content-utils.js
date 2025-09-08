@@ -2,7 +2,7 @@
  * Shared utilities for content processing and spec generation
  */
 
-import { FIGMA_REGEX, SPEC_REGEX, DEFAULT_CONFIG } from './constants.js';
+import { FIGMA_REGEX, SPEC_REGEX, DEFAULT_CONFIG } from "./constants.js";
 
 /**
  * Find Figma links in text, excluding already processed content
@@ -14,11 +14,14 @@ export function findFigmaLinks(text) {
 
   // Remove all content between spec markers to avoid processing already processed links
   let cleanText = text;
-  cleanText = cleanText.replace(SPEC_REGEX.SPEC_BLOCK, '');
+  cleanText = cleanText.replace(SPEC_REGEX.SPEC_BLOCK, "");
 
   // Find markdown links first
   let match;
-  const markdownRegex = new RegExp(FIGMA_REGEX.MARKDOWN_LINK.source, FIGMA_REGEX.MARKDOWN_LINK.flags);
+  const markdownRegex = new RegExp(
+    FIGMA_REGEX.MARKDOWN_LINK.source,
+    FIGMA_REGEX.MARKDOWN_LINK.flags,
+  );
   while ((match = markdownRegex.exec(cleanText)) !== null) {
     links.push({
       url: match[2],
@@ -29,8 +32,11 @@ export function findFigmaLinks(text) {
   }
 
   // Find standalone URLs (that aren't part of markdown links)
-  const textWithoutMarkdown = cleanText.replace(markdownRegex, '');
-  const standaloneRegex = new RegExp(FIGMA_REGEX.STANDALONE_URL.source, FIGMA_REGEX.STANDALONE_URL.flags);
+  const textWithoutMarkdown = cleanText.replace(markdownRegex, "");
+  const standaloneRegex = new RegExp(
+    FIGMA_REGEX.STANDALONE_URL.source,
+    FIGMA_REGEX.STANDALONE_URL.flags,
+  );
   while ((match = standaloneRegex.exec(textWithoutMarkdown)) !== null) {
     links.push({
       url: match[0],
@@ -49,7 +55,10 @@ export function findFigmaLinks(text) {
  * @returns {number} - Next spec number
  */
 export function getNextSpecNumber(text) {
-  const specRegex = new RegExp(SPEC_REGEX.START_SPEC.source, SPEC_REGEX.START_SPEC.flags);
+  const specRegex = new RegExp(
+    SPEC_REGEX.START_SPEC.source,
+    SPEC_REGEX.START_SPEC.flags,
+  );
   let maxNumber = 0;
   let match;
 
@@ -70,13 +79,16 @@ export function getNextSpecNumber(text) {
  */
 export function getExistingSpecsByNodeId(text) {
   const existingSpecs = {};
-  const specRegex = new RegExp(SPEC_REGEX.EXISTING_SPEC.source, SPEC_REGEX.EXISTING_SPEC.flags);
+  const specRegex = new RegExp(
+    SPEC_REGEX.EXISTING_SPEC.source,
+    SPEC_REGEX.EXISTING_SPEC.flags,
+  );
   let match;
 
   while ((match = specRegex.exec(text)) !== null) {
     const specNumber = parseInt(match[1], 10);
     const fileId = match[2];
-    const nodeId = match[3].replace('-', ':');
+    const nodeId = match[3].replace("-", ":");
     const versionId = match[4];
     const nodeVersionKey = `${fileId}:${nodeId}:${versionId}`;
     existingSpecs[nodeVersionKey] = specNumber;
@@ -93,7 +105,12 @@ export function getExistingSpecsByNodeId(text) {
  * @param {string} specId - Spec ID
  * @returns {string} - Reference text
  */
-export function createReferenceText(isMarkdownLink, linkText, specNumber, specId) {
+export function createReferenceText(
+  isMarkdownLink,
+  linkText,
+  specNumber,
+  specId,
+) {
   if (isMarkdownLink && linkText) {
     return `${linkText} ([Refer to Design Spec ${specNumber}](#${specId}))`;
   } else {
@@ -119,7 +136,7 @@ export function createDesignSpecSnippet(
   cleanUrl,
   versionId,
   snapshotTimestamp,
-  expirationString
+  expirationString,
 ) {
   return `
 <!-- START_SPEC_${specNumber} -->
@@ -164,7 +181,7 @@ export function createDesignSpecSnippet(
  */
 export function getDesignSpecsEndMarker(customHeading = null) {
   const heading = customHeading || DEFAULT_CONFIG.SPEC_HEADING;
-  return `<!-- END_${heading.toUpperCase().replace(/\s+/g, '_')}_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
+  return `<!-- END_${heading.toUpperCase().replace(/\s+/g, "_")}_SPECS - WILL NOT DETECT FIGMA LINKS BELOW THIS LINE -->`;
 }
 
 /**
@@ -172,9 +189,11 @@ export function getDesignSpecsEndMarker(customHeading = null) {
  * @param {string} customHeading - Custom heading (defaults to "Design Specs")
  * @returns {RegExp} - Regex to match the heading
  */
-export function createDesignSpecsRegex(customHeading = DEFAULT_CONFIG.SPEC_HEADING) {
-  const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, 'im');
+export function createDesignSpecsRegex(
+  customHeading = DEFAULT_CONFIG.SPEC_HEADING,
+) {
+  const escapedHeading = customHeading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^#{1,6}\\s*${escapedHeading}\\s*$`, "im");
 }
 
 /**
@@ -184,7 +203,11 @@ export function createDesignSpecsRegex(customHeading = DEFAULT_CONFIG.SPEC_HEADI
  * @param {string} customHeading - Custom heading for specs section
  * @returns {string} - Updated text with design specs
  */
-export function addDesignSpecsSection(text, designSpecs, customHeading = DEFAULT_CONFIG.SPEC_HEADING) {
+export function addDesignSpecsSection(
+  text,
+  designSpecs,
+  customHeading = DEFAULT_CONFIG.SPEC_HEADING,
+) {
   const designSpecsRegex = createDesignSpecsRegex(customHeading);
   const match = text.match(designSpecsRegex);
   const endMarker = getDesignSpecsEndMarker(customHeading);
@@ -197,21 +220,23 @@ export function addDesignSpecsSection(text, designSpecs, customHeading = DEFAULT
       // Insert before end marker
       const beforeEnd = text.substring(0, endIndex);
       const afterEnd = text.substring(endIndex);
-      return beforeEnd + designSpecs.join('\n') + '\n' + afterEnd;
+      return beforeEnd + designSpecs.join("\n") + "\n" + afterEnd;
     } else {
       // Add end marker and specs after the section
       const sectionIndex = text.indexOf(match[0]) + match[0].length;
       const before = text.substring(0, sectionIndex);
       const after = text.substring(sectionIndex);
-      return before + '\n\n' + designSpecs.join('\n') + '\n\n' + endMarker + after;
+      return (
+        before + "\n\n" + designSpecs.join("\n") + "\n\n" + endMarker + after
+      );
     }
   } else {
     // Create new section at the end
     return (
       text +
       `\n\n## ${customHeading}\n\n` +
-      designSpecs.join('\n') +
-      '\n\n' +
+      designSpecs.join("\n") +
+      "\n\n" +
       endMarker
     );
   }
@@ -223,7 +248,10 @@ export function addDesignSpecsSection(text, designSpecs, customHeading = DEFAULT
  * @param {string} customHeading - Custom heading for specs section
  * @returns {string|null} - Extracted specs section or null if not found
  */
-export function extractSpecsSection(text, customHeading = DEFAULT_CONFIG.SPEC_HEADING) {
+export function extractSpecsSection(
+  text,
+  customHeading = DEFAULT_CONFIG.SPEC_HEADING,
+) {
   const designSpecsRegex = createDesignSpecsRegex(customHeading);
   const match = text.match(designSpecsRegex);
   const endMarker = getDesignSpecsEndMarker(customHeading);
@@ -232,7 +260,7 @@ export function extractSpecsSection(text, customHeading = DEFAULT_CONFIG.SPEC_HE
 
   const sectionStart = text.indexOf(match[0]);
   const endMarkerIndex = text.indexOf(endMarker);
-  
+
   if (endMarkerIndex === -1) return null;
 
   return text.substring(sectionStart, endMarkerIndex + endMarker.length);

@@ -3,16 +3,16 @@
  * Abstracts browser differences between Chrome and Firefox
  */
 
-import { STORAGE_KEYS, DEFAULT_CONFIG, VALIDATION } from './constants.js';
+import { STORAGE_KEYS, DEFAULT_CONFIG, VALIDATION } from "./constants.js";
 
 // Detect browser API
 const browserAPI = (() => {
-  if (typeof chrome !== 'undefined' && chrome.storage) {
+  if (typeof chrome !== "undefined" && chrome.storage) {
     return chrome;
-  } else if (typeof browser !== 'undefined' && browser.storage) {
+  } else if (typeof browser !== "undefined" && browser.storage) {
     return browser;
   } else {
-    throw new Error('No supported browser storage API found');
+    throw new Error("No supported browser storage API found");
   }
 })();
 
@@ -66,11 +66,11 @@ export async function getFigmaToken() {
  */
 export async function setFigmaToken(token) {
   if (!VALIDATION.FIGMA_TOKEN.test(token)) {
-    throw new Error('Invalid Figma token format');
+    throw new Error("Invalid Figma token format");
   }
-  
+
   await setStorageValue({
-    [STORAGE_KEYS.FIGMA_TOKEN]: token
+    [STORAGE_KEYS.FIGMA_TOKEN]: token,
   });
 }
 
@@ -90,11 +90,11 @@ export async function getSpecHeading() {
  */
 export async function setSpecHeading(heading) {
   if (!heading || !VALIDATION.HEADING_TEXT.test(heading)) {
-    throw new Error('Invalid heading format');
+    throw new Error("Invalid heading format");
   }
-  
+
   await setStorageValue({
-    [STORAGE_KEYS.SPEC_HEADING]: heading.trim()
+    [STORAGE_KEYS.SPEC_HEADING]: heading.trim(),
   });
 }
 
@@ -114,7 +114,7 @@ export async function isDiffApprovalEnabled() {
  */
 export async function setDiffApprovalEnabled(enabled) {
   await setStorageValue({
-    [STORAGE_KEYS.DIFF_APPROVAL_ENABLED]: Boolean(enabled)
+    [STORAGE_KEYS.DIFF_APPROVAL_ENABLED]: Boolean(enabled),
   });
 }
 
@@ -126,12 +126,13 @@ export async function getAllSettings() {
   const result = await getStorageValue([
     STORAGE_KEYS.FIGMA_TOKEN,
     STORAGE_KEYS.SPEC_HEADING,
-    STORAGE_KEYS.DIFF_APPROVAL_ENABLED
+    STORAGE_KEYS.DIFF_APPROVAL_ENABLED,
   ]);
-  
+
   return {
     figmaToken: result[STORAGE_KEYS.FIGMA_TOKEN] || null,
-    specHeading: result[STORAGE_KEYS.SPEC_HEADING] || DEFAULT_CONFIG.SPEC_HEADING,
+    specHeading:
+      result[STORAGE_KEYS.SPEC_HEADING] || DEFAULT_CONFIG.SPEC_HEADING,
     diffApprovalEnabled: result[STORAGE_KEYS.DIFF_APPROVAL_ENABLED] || false,
   };
 }

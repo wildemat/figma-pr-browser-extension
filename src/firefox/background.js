@@ -4,10 +4,12 @@
 
 // Handle extension installation
 browser.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') {
+  if (details.reason === "install") {
     // Open the popup to guide user through setup
     // Note: Firefox doesn't support programmatic popup opening
-    console.log('Extension installed. Please click the extension icon to configure.');
+    console.log(
+      "Extension installed. Please click the extension icon to configure.",
+    );
   }
 });
 
@@ -15,10 +17,10 @@ browser.runtime.onInstalled.addListener((details) => {
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "testToken") {
     testFigmaToken(message.token)
-      .then(user => {
+      .then((user) => {
         sendResponse({ success: true, user: user });
       })
-      .catch(error => {
+      .catch((error) => {
         sendResponse({ success: false, error: error.message });
       });
     return true; // Keep message channel open for async response
@@ -43,9 +45,7 @@ async function testFigmaToken(token) {
       } else if (response.status === 429) {
         throw new Error("Rate limited - try again later");
       } else {
-        throw new Error(
-          `API error: ${response.status} ${response.statusText}`
-        );
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
     }
 
@@ -58,11 +58,11 @@ async function testFigmaToken(token) {
   } catch (error) {
     if (error.name === "TypeError" && error.message.includes("fetch")) {
       throw new Error(
-        "Network error - check your internet connection and try again"
+        "Network error - check your internet connection and try again",
       );
     }
     throw error;
   }
 }
 
-console.log('Figma PR Extension background script loaded');
+console.log("Figma PR Extension background script loaded");

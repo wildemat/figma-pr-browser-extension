@@ -7,6 +7,8 @@
 
 A browser extension that automatically processes Figma links in GitHub PR descriptions and generates interactive design specs with images, version tracking, and detailed metadata.
 
+🐙 **Also available as a [GitHub Action](https://github.com/wildemat/github-figma-action)**
+
 ## Features
 
 - 🎨 **Automatic Figma Link Processing**: Converts Figma design links into rich, interactive design specifications
@@ -19,10 +21,10 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 
 ## Browser Support
 
-| Browser | Status | Location |
-|---------|--------|----------|
-| Chrome/Chromium | ✅ Supported | `/chrome/` |
-| Firefox | ✅ Supported | `/firefox/` |
+| Browser         | Status       | Location    |
+| --------------- | ------------ | ----------- |
+| Chrome/Chromium | ✅ Supported | `/chrome/`  |
+| Firefox         | ✅ Supported | `/firefox/` |
 
 ## Installation
 
@@ -68,11 +70,13 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 ## Example Output
 
 The extension converts Figma links like:
+
 ```
 https://www.figma.com/design/abc123/MyDesign?node-id=1-2
 ```
 
 Into interactive design specs with:
+
 - 🖼️ Design preview images
 - 📋 Expandable spec details
 - 🔗 Clean links to specific design versions
@@ -84,6 +88,7 @@ Into interactive design specs with:
 ### Figma API Token Requirements
 
 Your Figma API token needs these scopes:
+
 - `file_content:read` - Required to access design content and nodes
 - `file_metadata:read` - Required to fetch file information and metadata
 - `file_versions:read` - Required for version tracking functionality
@@ -110,7 +115,7 @@ figma-pr-browser-extension/
 │   └── ...
 ├── firefox/               # Firefox extension
 │   ├── manifest.json      # Firefox manifest v2
-│   ├── popup.html         # Settings popup  
+│   ├── popup.html         # Settings popup
 │   ├── popup.js           # Popup functionality
 │   ├── background.js      # Background script
 │   ├── content.js         # GitHub integration
@@ -120,12 +125,12 @@ figma-pr-browser-extension/
 
 ### Key Differences Between Browsers
 
-| Feature | Chrome | Firefox |
-|---------|--------|---------|
-| Manifest Version | v3 | v2 |
-| Background Script | Service Worker | Persistent Background |
-| Storage API | `chrome.storage` | `browser.storage` |
-| Runtime API | `chrome.runtime` | `browser.runtime` |
+| Feature           | Chrome           | Firefox               |
+| ----------------- | ---------------- | --------------------- |
+| Manifest Version  | v3               | v2                    |
+| Background Script | Service Worker   | Persistent Background |
+| Storage API       | `chrome.storage` | `browser.storage`     |
+| Runtime API       | `chrome.runtime` | `browser.runtime`     |
 
 ### Building/Testing
 
@@ -142,22 +147,24 @@ We welcome contributions! To get started:
 3. **Follow the existing code patterns** for browser compatibility
 4. **Update documentation** if you add new features
 
-For questions about the codebase architecture, security practices, or troubleshooting, the prompts file contains helpful starter questions for AI assistants.
-4. **Check browser console** for debug logs
+For questions about the codebase architecture, security practices, or troubleshooting, the prompts file contains helpful starter questions for AI assistants. 4. **Check browser console** for debug logs
 
 ## Troubleshooting
 
 ### Button Not Appearing
+
 - Ensure you're editing a PR description (not a comment)
 - Make sure you're on the "Write" tab (not "Preview")
 - Check that the extension has proper permissions for GitHub
 
 ### Token Test Failing
+
 - Verify your token has the correct scopes
 - Check your internet connection
 - Ensure the token hasn't expired
 
 ### Processing Errors
+
 - Check browser console for detailed error messages
 - Verify Figma links are properly formatted
 - Ensure you have access to the Figma files
@@ -177,6 +184,7 @@ MIT License - see LICENSE file for details
 ## Privacy
 
 This extension:
+
 - Only processes data on GitHub PR pages
 - Sends Figma API requests directly to Figma's servers
 - Stores only your Figma API token locally

@@ -2,7 +2,7 @@
  * Shared utilities for Figma API and URL handling
  */
 
-import { FIGMA_REGEX, FIGMA_API, DEFAULT_CONFIG } from './constants.js';
+import { FIGMA_REGEX, FIGMA_API, DEFAULT_CONFIG } from "./constants.js";
 
 /**
  * Parse a Figma URL to extract file ID, node ID, and version ID
@@ -17,7 +17,7 @@ export function parseFigmaUrl(url) {
   if (fileIdMatch && nodeIdMatch) {
     return {
       fileId: fileIdMatch[1],
-      nodeId: nodeIdMatch[1].replace('-', ':'),
+      nodeId: nodeIdMatch[1].replace("-", ":"),
       versionId: versionMatch ? versionMatch[1] : null,
     };
   }
@@ -32,18 +32,18 @@ export function parseFigmaUrl(url) {
  */
 export async function fetchLatestVersion(fileId, figmaToken) {
   const url = `${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.FILE_VERSIONS(fileId)}`;
-  
+
   const response = await fetch(url, {
     headers: {
-      'X-Figma-Token': figmaToken,
+      "X-Figma-Token": figmaToken,
       ...FIGMA_API.HEADERS,
-    }
+    },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Figma API error: ${response.status}`);
   }
-  
+
   const data = await response.json();
   return data.versions[0];
 }
@@ -57,25 +57,25 @@ export async function fetchLatestVersion(fileId, figmaToken) {
  */
 export async function fetchNodeImageUrl(fileId, nodeId, figmaToken) {
   const url = `${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.NODE_IMAGES(fileId)}?ids=${nodeId}&format=${FIGMA_API.IMAGE_FORMAT}`;
-  
+
   const response = await fetch(url, {
     headers: {
-      'X-Figma-Token': figmaToken,
+      "X-Figma-Token": figmaToken,
       ...FIGMA_API.HEADERS,
-    }
+    },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Figma API error: ${response.status}`);
   }
-  
+
   const data = await response.json();
   const imageUrl = data.images[nodeId];
-  
+
   if (!imageUrl) {
     throw new Error(`Could not get image for node ${nodeId}`);
   }
-  
+
   return imageUrl;
 }
 
@@ -96,10 +96,12 @@ export function createVersionFromId(versionId) {
  * @param {number} days - Number of days from now (default: 30)
  * @returns {string} - ISO date string
  */
-export function calculateImageExpirationDate(days = DEFAULT_CONFIG.IMAGE_EXPIRATION_DAYS) {
+export function calculateImageExpirationDate(
+  days = DEFAULT_CONFIG.IMAGE_EXPIRATION_DAYS,
+) {
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + days);
-  return expirationDate.toISOString().split('T')[0];
+  return expirationDate.toISOString().split("T")[0];
 }
 
 /**
@@ -110,7 +112,7 @@ export function calculateImageExpirationDate(days = DEFAULT_CONFIG.IMAGE_EXPIRAT
  * @returns {string} - Clean Figma URL
  */
 export function createCleanFigmaUrl(fileId, nodeId, versionId) {
-  const dashNodeId = nodeId.replace(':', '-');
+  const dashNodeId = nodeId.replace(":", "-");
   return `https://www.figma.com/design/${fileId}/?node-id=${dashNodeId}&version-id=${versionId}&m=dev`;
 }
 
@@ -120,21 +122,24 @@ export function createCleanFigmaUrl(fileId, nodeId, versionId) {
  * @returns {Promise<Object>} - User information if valid
  */
 export async function testFigmaToken(token) {
-  const response = await fetch(`${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.USER}`, {
-    headers: {
-      'X-Figma-Token': token,
-      ...FIGMA_API.HEADERS,
+  const response = await fetch(
+    `${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.USER}`,
+    {
+      headers: {
+        "X-Figma-Token": token,
+        ...FIGMA_API.HEADERS,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Figma API Error:', response.status, errorText);
+    console.error("Figma API Error:", response.status, errorText);
 
     if (FIGMA_API.ERROR_CODES.UNAUTHORIZED.includes(response.status)) {
-      throw new Error('Invalid token or insufficient permissions');
+      throw new Error("Invalid token or insufficient permissions");
     } else if (response.status === FIGMA_API.ERROR_CODES.RATE_LIMITED) {
-      throw new Error('Rate limited - try again later');
+      throw new Error("Rate limited - try again later");
     } else {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
@@ -142,7 +147,7 @@ export async function testFigmaToken(token) {
 
   const data = await response.json();
   if (!data.id) {
-    throw new Error('Invalid response from Figma API');
+    throw new Error("Invalid response from Figma API");
   }
 
   return data.email || data.handle;

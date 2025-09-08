@@ -15,15 +15,8 @@
         "https://github.com/*/pull/*",
         "https://github.com/*/compare/*"
       ],
-      "js": [
-        "debug.js",
-        "snarkdown.js",
-        "utils.js",
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ]
+      "js": ["debug.js", "snarkdown.js", "utils.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
   "browser_action": {
@@ -38,9 +31,7 @@
     }
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ],
+    "scripts": ["background.js"],
     "persistent": false
   },
   "icons": {
