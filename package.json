@@ -7,7 +7,10 @@
     "build:chrome": "node build.js chrome",
     "build:firefox": "node build.js firefox",
     "clean": "node build.js clean",
-    "dev": "node build.js && echo 'Built both extensions. Load the chrome/ or firefox/ directory in your browser.'"
+    "dev": "node build.js && echo 'Built both extensions. Load the chrome/ or firefox/ directory in your browser.'",
+    "lint": "npx prettier --check \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
+    "lint:fix": "npx prettier --write \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
+    "prepare": "husky"
   },
   "keywords": [
     "figma",
@@ -20,5 +23,14 @@
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6"
+  },
+  "lint-staged": {
+    "*.{js,html,json,md,css}": [
+      "npx prettier --write"
+    ]
   }
 }
