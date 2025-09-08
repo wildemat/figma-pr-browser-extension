@@ -21,6 +21,7 @@ class FigmaPRProcessor {
 
     this.addProcessButton();
     this.observePageChanges();
+    this.startPeriodicCheck();
   }
 
   addProcessButton() {
@@ -213,7 +214,11 @@ class FigmaPRProcessor {
                 node.matches('.edit-comment-hide') ||
                 node.matches('.js-comment-update') ||
                 node.matches('.comment-form-head') ||
-                node.matches('textarea')
+                node.matches('textarea') ||
+                // Check for button removal (could indicate edit mode exit)
+                node.matches('button[data-cancel-text="Cancel"]') ||
+                node.matches('.js-comment-cancel-button') ||
+                node.querySelector('button[data-cancel-text="Cancel"], .js-comment-cancel-button')
               );
             });
             
@@ -237,6 +242,59 @@ class FigmaPRProcessor {
     });
   }
 
+  startPeriodicCheck() {
+    // Periodically check button state to catch missed events
+    setInterval(() => {
+      // Only check if we're not currently processing and button exists
+      if (!this.isProcessing && document.querySelector('#figma-process-btn')) {
+        const shouldButtonBeVisible = this.shouldButtonBeVisible();
+        const buttonExists = document.querySelector('#figma-process-btn') !== null;
+        
+        // If button should not be visible but exists, or should be visible but doesn't exist
+        if (shouldButtonBeVisible !== buttonExists) {
+          console.log('Periodic check: button state mismatch, updating...', {
+            shouldBeVisible: shouldButtonBeVisible,
+            exists: buttonExists
+          });
+          this.addProcessButton();
+        }
+      }
+    }, 2000); // Check every 2 seconds
+  }
+
+  shouldButtonBeVisible() {
+    // Same logic as in addProcessButton but returns boolean
+    const prDescriptionTextarea = document.querySelector('#pull_request_body') ||
+                                 document.querySelector('textarea[name="pull_request[body]"]');
+    
+    const firstCommentUpdateContainer = document.querySelector('.js-comment-update');
+    let isInEditMode = false;
+    
+    if (firstCommentUpdateContainer) {
+      const cancelButton = firstCommentUpdateContainer.querySelector('.js-comment-cancel-button');
+      const updateButton = firstCommentUpdateContainer.querySelector('button[type="submit"]:not(.js-comment-cancel-button)') ||
+                          firstCommentUpdateContainer.querySelector('button.Button--primary') ||
+                          firstCommentUpdateContainer.querySelector('button:has(.Button-label)') ||
+                          firstCommentUpdateContainer.querySelector('input[type="submit"]');
+      
+      isInEditMode = cancelButton && updateButton && 
+                    cancelButton.offsetParent !== null && 
+                    updateButton.offsetParent !== null;
+    }
+    
+    const allWriteTabs = document.querySelectorAll('.write-tab, .js-write-tab');
+    const allPreviewTabs = document.querySelectorAll('.preview-tab, .js-preview-tab');
+    
+    const isWriteTabActive = Array.from(allWriteTabs).some(tab => 
+      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+    );
+    const isPreviewTabActive = Array.from(allPreviewTabs).some(tab => 
+      tab.classList.contains('selected') || tab.getAttribute('aria-selected') === 'true'
+    );
+    
+    return prDescriptionTextarea && isInEditMode && !isPreviewTabActive && isWriteTabActive;
+  }
+
   addTabClickListeners() {
     // Listen for clicks on Write/Preview tabs, Cancel buttons, and Edit buttons
     document.addEventListener('click', (event) => {
@@ -258,15 +316,21 @@ class FigmaPRProcessor {
         }, 100);
       }
       
-      // Check if clicked element is a cancel button
-      if (target && target.classList.contains('js-comment-cancel-button')) {
-        console.log('Cancel button clicked');
+      // Check if clicked element is a cancel button (more robust detection)
+      if (target && (
+        target.classList.contains('js-comment-cancel-button') ||
+        target.textContent?.trim().toLowerCase() === 'cancel' ||
+        target.getAttribute('data-cancel-text') === 'Cancel' ||
+        target.closest('button[data-cancel-text="Cancel"]') ||
+        target.closest('.js-comment-cancel-button')
+      )) {
+        console.log('Cancel button clicked:', target.className, target.textContent);
         
         // Delay to allow GitHub to exit edit mode
         setTimeout(() => {
           console.log('Updating button after cancel click');
           this.addProcessButton();
-        }, 100);
+        }, 150); // Slightly longer delay
       }
       
       // Check if clicked element is an edit button

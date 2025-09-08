@@ -1,5 +1,10 @@
 # Figma PR Browser Extension
 
+![Chrome](https://img.shields.io/badge/Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white) ![Firefox](https://img.shields.io/badge/Firefox-FF7139?style=for-the-badge&logo=firefox&logoColor=white)
+
+> **⚠️ Status: Work in Progress**  
+> This extension is currently in development and requires further polish and performance improvements. While functional, you may encounter bugs or inconsistencies. Use with caution and expect regular updates.
+
 A browser extension that automatically processes Figma links in GitHub PR descriptions and generates interactive design specs with images, version tracking, and detailed metadata.
 
 ## Features
