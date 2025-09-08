@@ -12,14 +12,8 @@ class FigmaPRProcessor {
 
   async init() {
     // Get Figma token from storage
-    const result = await browser.storage.sync.get(["figmaToken"]);
+    const result = await chrome.storage.sync.get(["figmaToken"]);
     this.figmaToken = result.figmaToken;
-
-    if (!this.figmaToken) {
-      console.log(
-        "Figma PR Extension: No token found. Button will prompt for token configuration.",
-      );
-    }
 
     this.addProcessButton();
     this.observePageChanges();
@@ -30,7 +24,6 @@ class FigmaPRProcessor {
     // Remove existing button first
     const existingButton = document.querySelector("#figma-process-btn");
     if (existingButton) {
-      console.log("Removing existing button");
       existingButton.remove();
     }
 
@@ -61,19 +54,6 @@ class FigmaPRProcessor {
         ) ||
         firstCommentUpdateContainer.querySelector('input[type="submit"]');
 
-      // Debug logging
-      console.log("Edit mode check:", {
-        container: !!firstCommentUpdateContainer,
-        cancelButton: !!cancelButton,
-        cancelVisible: cancelButton
-          ? cancelButton.offsetParent !== null
-          : false,
-        updateButton: !!updateButton,
-        updateVisible: updateButton
-          ? updateButton.offsetParent !== null
-          : false,
-      });
-
       // Edit mode only if both buttons exist and are visible within the first .js-comment-update container
       isInEditMode =
         cancelButton &&
@@ -96,29 +76,6 @@ class FigmaPRProcessor {
       ".preview-tab, .js-preview-tab",
     );
 
-    console.log("Tab debug:", {
-      writeTab: writeTab,
-      previewTab: previewTab,
-      allWriteTabs: allWriteTabs.length,
-      allPreviewTabs: allPreviewTabs.length,
-      writeTabSelected:
-        allWriteTabs.length > 0
-          ? Array.from(allWriteTabs).map((tab) => ({
-              classes: tab.className,
-              ariaSelected: tab.getAttribute("aria-selected"),
-              selected: tab.classList.contains("selected"),
-            }))
-          : [],
-      previewTabSelected:
-        allPreviewTabs.length > 0
-          ? Array.from(allPreviewTabs).map((tab) => ({
-              classes: tab.className,
-              ariaSelected: tab.getAttribute("aria-selected"),
-              selected: tab.classList.contains("selected"),
-            }))
-          : [],
-    });
-
     // More robust tab checking
     const isWriteTabActive = Array.from(allWriteTabs).some(
       (tab) =>
@@ -131,8 +88,6 @@ class FigmaPRProcessor {
         tab.getAttribute("aria-selected") === "true",
     );
 
-    console.log("Tab states:", { isWriteTabActive, isPreviewTabActive });
-
     // Must have PR description textarea, be in edit mode, and Write tab active (not Preview)
     // If Preview tab is active, always hide button regardless of Write tab state
     if (
@@ -141,21 +96,10 @@ class FigmaPRProcessor {
       isPreviewTabActive ||
       !isWriteTabActive
     ) {
-      console.log(
-        "Button hidden - textarea:",
-        !!prDescriptionTextarea,
-        "editMode:",
-        !!isInEditMode,
-        "writeActive:",
-        isWriteTabActive,
-        "previewActive:",
-        isPreviewTabActive,
-      );
       return;
     }
 
     // Create process button
-    console.log("Creating new button");
     const button = document.createElement("button");
     button.id = "figma-process-btn";
     button.className = "btn btn-sm btn-outline";
@@ -185,10 +129,6 @@ class FigmaPRProcessor {
         container.appendChild(button);
         button.addEventListener("click", () => this.processCurrentPR());
         buttonAdded = true;
-        console.log(
-          "Figma PR Extension: Button added to edit mode location",
-          selector,
-        );
         break;
       }
     }
@@ -201,10 +141,6 @@ class FigmaPRProcessor {
           container.appendChild(button);
           button.addEventListener("click", () => this.processCurrentPR());
           buttonAdded = true;
-          console.log(
-            "Figma PR Extension: Button added to general location",
-            selector,
-          );
           break;
         }
       }
@@ -216,7 +152,6 @@ class FigmaPRProcessor {
       if (form) {
         form.appendChild(button);
         button.addEventListener("click", () => this.processCurrentPR());
-        console.log("Figma PR Extension: Button added to form as fallback");
       }
     }
   }
@@ -321,10 +256,6 @@ class FigmaPRProcessor {
 
         // If button should not be visible but exists, or should be visible but doesn't exist
         if (shouldButtonBeVisible !== buttonExists) {
-          console.log("Periodic check: button state mismatch, updating...", {
-            shouldBeVisible: shouldButtonBeVisible,
-            exists: buttonExists,
-          });
           this.addProcessButton();
         }
       }
@@ -401,11 +332,8 @@ class FigmaPRProcessor {
             target.classList.contains("js-write-tab") ||
             target.classList.contains("js-preview-tab"))
         ) {
-          console.log("Tab clicked:", target.className);
-
           // Delay to allow GitHub to update the tab states
           setTimeout(() => {
-            console.log("Updating button after tab click");
             this.addProcessButton();
           }, 100);
         }
@@ -419,27 +347,20 @@ class FigmaPRProcessor {
             target.closest('button[data-cancel-text="Cancel"]') ||
             target.closest(".js-comment-cancel-button"))
         ) {
-          console.log(
-            "Cancel button clicked:",
-            target.className,
-            target.textContent,
-          );
-
           // Delay to allow GitHub to exit edit mode
           setTimeout(() => {
-            console.log("Updating button after cancel click");
             this.addProcessButton();
           }, 150); // Slightly longer delay
         }
 
         // Check if clicked element is an edit button
         if (target && target.classList.contains("js-comment-edit-button")) {
-          console.log("Edit button clicked");
-
-          // Delay to allow GitHub to enter edit mode
+          // Delay to allow GitHub to enter edit mode, then check if button is needed
           setTimeout(() => {
-            console.log("Updating button after edit click");
-            this.addProcessButton();
+            // Only update if button doesn't already exist (check inside timeout)
+            if (!document.querySelector("#figma-process-btn")) {
+              this.addProcessButton();
+            }
           }, 200); // Slightly longer delay for edit mode to fully load
         }
       },
@@ -518,11 +439,11 @@ class FigmaPRProcessor {
 
   async getSettings() {
     return new Promise((resolve, reject) => {
-      browser.storage.sync.get(
+      chrome.storage.sync.get(
         ["figmaToken", "specHeading", "diffApprovalEnabled"],
         (result) => {
-          if (browser.runtime.lastError) {
-            reject(new Error(browser.runtime.lastError.message));
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
           } else {
             resolve({
               figmaToken: result.figmaToken || null,
@@ -886,8 +807,8 @@ class FigmaPRProcessor {
     // Set the extension icon dynamically based on browser
     const iconImg = modal.querySelector("#extension-icon");
     const extensionId =
-      typeof chrome !== "undefined" && browser.runtime
-        ? browser.runtime.id
+      typeof chrome !== "undefined" && chrome.runtime
+        ? chrome.runtime.id
         : typeof browser !== "undefined" && browser.runtime
           ? browser.runtime.id
           : null;

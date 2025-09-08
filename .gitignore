@@ -5,6 +5,8 @@ npm-debug.log*
 # Build outputs
 dist/
 build/
+chrome/
+firefox/
 
 # OS generated files
 .DS_Store

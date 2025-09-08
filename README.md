@@ -21,26 +21,34 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 
 ## Browser Support
 
-| Browser         | Status       | Location    |
-| --------------- | ------------ | ----------- |
-| Chrome/Chromium | ✅ Supported | `/chrome/`  |
-| Firefox         | ✅ Supported | `/firefox/` |
+| Browser         | Status       | Built To         |
+| --------------- | ------------ | ---------------- |
+| Chrome/Chromium | ✅ Supported | `build/chrome/`  |
+| Firefox         | ✅ Supported | `build/firefox/` |
 
 ## Installation
 
-### Chrome/Chromium
+### For Development/Testing
 
-1. Navigate to `chrome://extensions/`
-2. Enable "Developer mode" (toggle in top-right)
-3. Click "Load unpacked"
-4. Select the `/chrome/` folder from this repository
+1. **Clone the repository** and build the extensions:
 
-### Firefox
+   ```bash
+   git clone <repo-url>
+   cd figma-pr-browser-extension
+   npm install
+   npm run build
+   ```
 
-1. Navigate to `about:debugging`
-2. Click "This Firefox"
-3. Click "Load Temporary Add-on"
-4. Select the `manifest.json` file from the `/firefox/` folder
+2. **Load the extension**:
+   - **Chrome**: Navigate to `chrome://extensions/` → Enable "Developer mode" → Click "Load unpacked" → Select the `build/chrome/` folder
+   - **Firefox**: Navigate to `about:debugging` → Click "This Firefox" → Click "Load Temporary Add-on" → Select `build/firefox/manifest.json`
+
+### For Distribution
+
+Use the pre-built zip files from `build/releases/`:
+
+- `figma-pr-extension-chrome.zip` for Chrome Web Store
+- `figma-pr-extension-firefox.zip` for Firefox Add-ons
 
 ## Setup
 
@@ -106,21 +114,27 @@ Your Figma API token needs these scopes:
 
 ```
 figma-pr-browser-extension/
-├── chrome/                 # Chrome extension
-│   ├── manifest.json      # Chrome manifest v3
-│   ├── popup.html         # Settings popup
-│   ├── popup.js           # Popup functionality
-│   ├── background.js      # Service worker
-│   ├── content.js         # GitHub integration
-│   └── ...
-├── firefox/               # Firefox extension
-│   ├── manifest.json      # Firefox manifest v2
-│   ├── popup.html         # Settings popup
-│   ├── popup.js           # Popup functionality
-│   ├── background.js      # Background script
-│   ├── content.js         # GitHub integration
-│   └── ...
-└── README.md             # This file
+├── src/
+│   ├── shared/            # Cross-browser source files
+│   │   ├── content.js     # Main content script
+│   │   ├── popup.js       # Popup functionality
+│   │   ├── popup.html     # Settings popup
+│   │   ├── utils.js       # Utility functions
+│   │   ├── snarkdown.js   # Markdown parser
+│   │   ├── background-chrome.js    # Chrome service worker
+│   │   ├── background-firefox.js   # Firefox background script
+│   │   └── debug-firefox.js        # Firefox debug utilities
+│   ├── chrome/            # Chrome-specific files
+│   │   └── manifest.json  # Chrome manifest v3
+│   ├── firefox/           # Firefox-specific files
+│   │   └── manifest.json  # Firefox manifest v2
+│   ├── icons/            # Extension icons
+│   └── content.css       # Content script styles
+├── build/                # Generated builds (not committed)
+│   ├── chrome/           # Built Chrome extension
+│   ├── firefox/          # Built Firefox extension
+│   └── releases/         # Distribution zip files
+└── build.js              # Build script
 ```
 
 ### Key Differences Between Browsers
@@ -135,15 +149,16 @@ figma-pr-browser-extension/
 ### Building/Testing
 
 1. **Make changes** to the source files in the `src/` directory
-2. **Build the extensions**: `npm run build` (or `npm run build:chrome`/`npm run build:firefox`)
-3. **Reload the extension** in your browser's extension management page
+2. **Build the extensions**: `npm run build`
+3. **Load the extension** for testing:
+   - **Chrome**: chrome://extensions/ → Load unpacked → select `build/chrome/` folder
+   - **Firefox**: about:debugging → Load Temporary Add-on → select `build/firefox/manifest.json`
 4. **Test on a GitHub PR** with Figma links
+5. **Distribution**: Use zip files in `build/releases/` for publishing
 
 ### Development Scripts
 
-- `npm run build` - Build both Chrome and Firefox extensions
-- `npm run build:chrome` - Build only Chrome extension
-- `npm run build:firefox` - Build only Firefox extension
+- `npm run build` - Build both Chrome and Firefox extensions with zip files
 - `npm run dev` - Build both extensions and show loading instructions
 - `npm run lint` - Check code formatting with Prettier
 - `npm run lint:fix` - Fix code formatting issues automatically
