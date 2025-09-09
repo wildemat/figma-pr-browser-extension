@@ -747,66 +747,38 @@ class FigmaPRProcessor {
   showTokenPrompt() {
     // Create a more prominent modal-style prompt
     const overlay = document.createElement("div");
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
+    overlay.className = "figma-modal-overlay";
 
     const modal = document.createElement("div");
-    modal.style.cssText = `
-      background: white;
-      border-radius: 8px;
-      padding: 24px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 16px 64px rgba(0,0,0,0.2);
-      text-align: center;
-    `;
+    modal.className = "figma-token-modal";
 
     // Create modal content using DOM methods for security
     const iconDiv = document.createElement("div");
-    iconDiv.style.marginBottom = "16px";
+    iconDiv.className = "icon";
 
     const iconImg = document.createElement("img");
     iconImg.id = "extension-icon";
-    iconImg.style.width = "48px";
-    iconImg.style.height = "48px";
     iconImg.alt = "Figma PR Links";
     iconDiv.appendChild(iconImg);
 
     const heading = document.createElement("h3");
-    heading.style.cssText =
-      "margin: 0 0 12px 0; color: #24292f; font-size: 18px;";
     heading.textContent = "Figma Token Required";
 
     const paragraph = document.createElement("p");
-    paragraph.style.cssText =
-      "margin: 0 0 20px 0; color: #656d76; line-height: 1.4;";
     paragraph.textContent =
       "Please configure your Figma API token to process Figma links.";
 
     const buttonDiv = document.createElement("div");
-    buttonDiv.style.cssText =
-      "display: flex; gap: 12px; justify-content: center;";
+    buttonDiv.className = "buttons";
 
     const configBtn = document.createElement("button");
     configBtn.id = "config-token-btn";
-    configBtn.style.cssText =
-      "padding: 10px 16px; background: #2da44e; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;";
+    configBtn.className = "figma-config-btn";
     configBtn.textContent = "Configure Token";
 
     const cancelBtn = document.createElement("button");
     cancelBtn.id = "cancel-token-btn";
-    cancelBtn.style.cssText =
-      "padding: 10px 16px; background: #f6f8fa; color: #24292f; border: 1px solid #d0d7de; border-radius: 6px; font-weight: 500; cursor: pointer;";
+    cancelBtn.className = "figma-cancel-btn";
     cancelBtn.textContent = "Cancel";
 
     buttonDiv.appendChild(configBtn);
@@ -839,7 +811,7 @@ class FigmaPRProcessor {
       // Fallback to emoji if extension URL not available
       extensionIcon.style.display = "none";
       const fallbackDiv = document.createElement("div");
-      fallbackDiv.style.cssText = "margin-bottom: 16px; font-size: 32px;";
+      fallbackDiv.className = "figma-fallback-icon";
       fallbackDiv.textContent = "🎨";
       extensionIcon.parentElement.replaceChild(fallbackDiv, extensionIcon);
     }
@@ -854,17 +826,14 @@ class FigmaPRProcessor {
       }
 
       const emojiDiv = document.createElement("div");
-      emojiDiv.style.cssText = "margin-bottom: 16px; font-size: 32px;";
+      emojiDiv.className = "figma-emoji-icon";
       emojiDiv.textContent = "🔧";
 
       const title = document.createElement("h3");
-      title.style.cssText =
-        "margin: 0 0 12px 0; color: #24292f; font-size: 18px;";
       title.textContent = "Configure Token";
 
       const instructions = document.createElement("p");
-      instructions.style.cssText =
-        "margin: 0 0 16px 0; color: #656d76; line-height: 1.4; text-align: left;";
+      instructions.className = "figma-instructions";
       instructions.textContent =
         "To configure your Figma API token:\n\n1. Click the extension icon in your browser toolbar\n2. Get a token from Figma Settings\n3. Paste it in the extension popup\n4. Click Save Settings\n5. Return here and try again";
 
@@ -875,8 +844,7 @@ class FigmaPRProcessor {
 
       const closeBtn = document.createElement("button");
       closeBtn.id = "close-instructions-btn";
-      closeBtn.style.cssText =
-        "padding: 10px 16px; background: #2da44e; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; width: 100%;";
+      closeBtn.className = "figma-close-btn";
       closeBtn.textContent = "Got it!";
 
       modal.appendChild(emojiDiv);
@@ -906,26 +874,7 @@ class FigmaPRProcessor {
   showNotification(message, type) {
     // Create notification element
     const notification = document.createElement("div");
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 16px;
-      border-radius: 6px;
-      color: white;
-      font-weight: 500;
-      z-index: 10000;
-      max-width: 400px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    `;
-
-    const colors = {
-      success: "#28a745",
-      error: "#dc3545",
-      info: "#17a2b8",
-    };
-
-    notification.style.backgroundColor = colors[type] || colors.info;
+    notification.className = `figma-notification ${type || "info"}`;
     notification.textContent = message;
 
     document.body.appendChild(notification);
@@ -951,86 +900,33 @@ class FigmaPRProcessor {
   createDiffPreviewModal(originalText, newText, onApprove) {
     // Create modal overlay
     const overlay = document.createElement("div");
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 10001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
+    overlay.className = "figma-diff-overlay";
 
     // Create modal content
     const modal = document.createElement("div");
-    modal.style.cssText = `
-      background: white;
-      border-radius: 8px;
-      width: 95vw;
-      height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    `;
+    modal.className = "figma-diff-modal";
 
     // Create header
     const header = document.createElement("div");
-    header.style.cssText = `
-      padding: 16px 24px;
-      border-bottom: 1px solid #e1e4e8;
-      background: #f6f8fa;
-    `;
+    header.className = "figma-diff-header";
     const headerTitle = document.createElement("h3");
-    headerTitle.style.cssText = "margin: 0; color: #24292e;";
     headerTitle.textContent = "Review Changes";
     header.appendChild(headerTitle);
 
     // Create split pane container
     const splitContainer = document.createElement("div");
-    splitContainer.style.cssText = `
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-      position: relative;
-    `;
+    splitContainer.className = "figma-diff-split-container";
 
     // Create left pane (original content)
     const leftPane = document.createElement("div");
-    leftPane.style.cssText = `
-      width: 50%;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #e1e4e8;
-    `;
+    leftPane.className = "figma-diff-left-pane";
 
     const leftHeader = document.createElement("div");
-    leftHeader.style.cssText = `
-      padding: 12px 16px;
-      background: #f6f8fa;
-      border-bottom: 1px solid #e1e4e8;
-      font-weight: 600;
-      color: #24292e;
-      font-size: 14px;
-    `;
+    leftHeader.className = "figma-diff-left-header";
     leftHeader.textContent = "Original Content";
 
     const leftContent = document.createElement("textarea");
-    leftContent.style.cssText = `
-      flex: 1;
-      padding: 16px;
-      border: none;
-      resize: none;
-      outline: none;
-      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
-      font-size: 12px;
-      line-height: 1.4;
-      background: #f8f9fa;
-      color: #656d76;
-    `;
+    leftContent.className = "figma-diff-left-content";
     leftContent.value = originalText;
     leftContent.readOnly = true;
 
@@ -1039,77 +935,27 @@ class FigmaPRProcessor {
 
     // Create resize handle
     const resizeHandle = document.createElement("div");
-    resizeHandle.style.cssText = `
-      width: 4px;
-      background: #e1e4e8;
-      cursor: col-resize;
-      transition: background-color 0.2s;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-2px);
-      z-index: 10;
-    `;
-
-    resizeHandle.addEventListener("mouseenter", () => {
-      resizeHandle.style.background = "#0969da";
-    });
-
-    resizeHandle.addEventListener("mouseleave", () => {
-      resizeHandle.style.background = "#e1e4e8";
-    });
+    resizeHandle.className = "figma-diff-resize-handle";
 
     // Create right pane (new content - editable)
     const rightPane = document.createElement("div");
-    rightPane.style.cssText = `
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    `;
+    rightPane.className = "figma-diff-right-pane";
 
     // Create tab header for right pane
     const rightHeader = document.createElement("div");
-    rightHeader.style.cssText = `
-      background: #f6f8fa;
-      border-bottom: 1px solid #e1e4e8;
-      display: flex;
-      align-items: center;
-    `;
+    rightHeader.className = "figma-diff-right-header";
 
     // Create tab navigation
     const tabNav = document.createElement("div");
-    tabNav.style.cssText = `
-      display: flex;
-      flex: 1;
-    `;
+    tabNav.className = "figma-diff-tab-nav";
 
     const editTab = document.createElement("button");
     editTab.textContent = "Edit";
-    editTab.style.cssText = `
-      padding: 12px 16px;
-      background: white;
-      border: none;
-      border-bottom: 2px solid #fd8c73;
-      font-weight: 600;
-      color: #24292e;
-      font-size: 14px;
-      cursor: pointer;
-    `;
-    editTab.classList.add("active-tab");
+    editTab.className = "figma-diff-tab active";
 
     const previewTab = document.createElement("button");
     previewTab.textContent = "Preview";
-    previewTab.style.cssText = `
-      padding: 12px 16px;
-      background: #f6f8fa;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-weight: 600;
-      color: #656d76;
-      font-size: 14px;
-      cursor: pointer;
-    `;
+    previewTab.className = "figma-diff-tab";
 
     tabNav.appendChild(editTab);
     tabNav.appendChild(previewTab);
@@ -1117,36 +963,15 @@ class FigmaPRProcessor {
 
     // Create content container for tabs
     const rightContentContainer = document.createElement("div");
-    rightContentContainer.style.cssText = `
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    `;
+    rightContentContainer.className = "figma-diff-right-content-container";
 
     const rightContent = document.createElement("textarea");
-    rightContent.style.cssText = `
-      flex: 1;
-      padding: 16px;
-      border: none;
-      resize: none;
-      outline: none;
-      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
-      font-size: 12px;
-      line-height: 1.4;
-      background: white;
-      display: block;
-    `;
+    rightContent.className = "figma-diff-right-content";
     rightContent.value = newText;
 
     // Create preview content container
     const previewContent = document.createElement("div");
-    previewContent.style.cssText = `
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-      background: white;
-      display: none;
-    `;
+    previewContent.className = "figma-diff-preview-content";
     this.safeSetHTML(previewContent, this.renderMarkdown(newText));
 
     rightContentContainer.appendChild(rightContent);
@@ -1154,51 +979,15 @@ class FigmaPRProcessor {
 
     // Tab switching logic
     editTab.addEventListener("click", () => {
-      editTab.style.cssText = `
-        padding: 12px 16px;
-        background: white;
-        border: none;
-        border-bottom: 2px solid #fd8c73;
-        font-weight: 600;
-        color: #24292e;
-        font-size: 14px;
-        cursor: pointer;
-      `;
-      previewTab.style.cssText = `
-        padding: 12px 16px;
-        background: #f6f8fa;
-        border: none;
-        border-bottom: 2px solid transparent;
-        font-weight: 600;
-        color: #656d76;
-        font-size: 14px;
-        cursor: pointer;
-      `;
+      editTab.className = "figma-diff-tab active";
+      previewTab.className = "figma-diff-tab";
       rightContent.style.display = "block";
       previewContent.style.display = "none";
     });
 
     previewTab.addEventListener("click", () => {
-      previewTab.style.cssText = `
-        padding: 12px 16px;
-        background: white;
-        border: none;
-        border-bottom: 2px solid #fd8c73;
-        font-weight: 600;
-        color: #24292e;
-        font-size: 14px;
-        cursor: pointer;
-      `;
-      editTab.style.cssText = `
-        padding: 12px 16px;
-        background: #f6f8fa;
-        border: none;
-        border-bottom: 2px solid transparent;
-        font-weight: 600;
-        color: #656d76;
-        font-size: 14px;
-        cursor: pointer;
-      `;
+      previewTab.className = "figma-diff-tab active";
+      editTab.className = "figma-diff-tab";
       rightContent.style.display = "none";
       previewContent.style.display = "block";
       // Update preview content when switching to preview tab
@@ -1217,13 +1006,7 @@ class FigmaPRProcessor {
 
     // Create copy buttons container (below right pane)
     const copyButtonsContainer = document.createElement("div");
-    copyButtonsContainer.style.cssText = `
-      padding: 12px 16px;
-      border-top: 1px solid #e1e4e8;
-      background: #f8f9fa;
-      display: flex;
-      gap: 8px;
-    `;
+    copyButtonsContainer.className = "figma-diff-copy-buttons";
 
     // Create copy buttons
     const copyFullBtn = this.createStyledButton("Copy Full Content", "copy");
@@ -1281,14 +1064,7 @@ class FigmaPRProcessor {
 
     // Create footer with action buttons
     const footer = document.createElement("div");
-    footer.style.cssText = `
-      padding: 16px 24px;
-      border-top: 1px solid #e1e4e8;
-      background: #f6f8fa;
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    `;
+    footer.className = "figma-diff-footer";
 
     const cancelBtn = this.createStyledButton("Cancel", "cancel");
     const approveBtn = this.createStyledButton("Approve & Apply", "approve");
@@ -1338,61 +1114,17 @@ class FigmaPRProcessor {
     const button = document.createElement("button");
     button.textContent = text;
 
-    let baseStyles, hoverStyles;
-
     switch (type) {
       case "copy":
-        baseStyles = `
-          padding: 6px 12px;
-          border: 1px solid #d0d7de;
-          border-radius: 6px;
-          background: white;
-          color: #24292e;
-          cursor: pointer;
-          font-size: 12px;
-          transition: all 0.2s ease;
-        `;
-        hoverStyles = "background: #f6f8fa; border-color: #8c959f;";
+        button.className = "figma-copy-btn";
         break;
-
       case "cancel":
-        baseStyles = `
-          padding: 8px 16px;
-          border: 1px solid #da3633;
-          border-radius: 6px;
-          background: white;
-          color: #da3633;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        `;
-        hoverStyles = "background: #da3633; color: white;";
+        button.className = "figma-cancel-footer-btn";
         break;
-
       case "approve":
-        baseStyles = `
-          padding: 8px 16px;
-          border: 1px solid #1f883d;
-          border-radius: 6px;
-          background: #1f883d;
-          color: white;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        `;
-        hoverStyles = "background: #1a7f37; border-color: #1a7f37;";
+        button.className = "figma-approve-btn";
         break;
     }
-
-    button.style.cssText = baseStyles;
-
-    button.addEventListener("mouseenter", () => {
-      button.style.cssText = baseStyles + hoverStyles;
-    });
-
-    button.addEventListener("mouseleave", () => {
-      button.style.cssText = baseStyles;
-    });
 
     return button;
   }
@@ -1432,43 +1164,7 @@ class FigmaPRProcessor {
     // Use Snarkdown library for markdown rendering
     const html = snarkdown(text);
 
-    return `
-      <div style="
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-        line-height: 1.6;
-        color: #24292e;
-      ">
-        <style>
-          h1, h2, h3 { margin-top: 24px; margin-bottom: 16px; font-weight: 600; }
-          h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
-          h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
-          h3 { font-size: 1.25em; }
-          p { margin-bottom: 16px; }
-          code { 
-            background: #f6f8fa; 
-            padding: 2px 4px; 
-            border-radius: 3px; 
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            font-size: 85%;
-          }
-          pre { 
-            background: #f6f8fa; 
-            padding: 16px; 
-            border-radius: 6px; 
-            overflow-x: auto;
-            margin: 16px 0;
-          }
-          pre code { background: none; padding: 0; }
-          ul { margin: 16px 0; padding-left: 30px; }
-          li { margin-bottom: 4px; }
-          hr { border: 0; border-top: 1px solid #eaecef; margin: 24px 0; }
-          a { color: #0366d6; text-decoration: none; }
-          a:hover { text-decoration: underline; }
-          strong { font-weight: 600; }
-        </style>
-        ${html}
-      </div>
-    `;
+    return `<div class="figma-markdown-content">${html}</div>`;
   }
 
   safeSetHTML(element, htmlContent) {
@@ -1516,86 +1212,33 @@ function safeSetHTML(element, htmlContent) {
 function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create modal overlay
   const overlay = document.createElement("div");
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 10001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
+  overlay.className = "figma-diff-overlay";
 
   // Create modal content
   const modal = document.createElement("div");
-  modal.style.cssText = `
-    background: white;
-    border-radius: 8px;
-    width: 95vw;
-    height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  `;
+  modal.className = "figma-diff-modal";
 
   // Create header
   const header = document.createElement("div");
-  header.style.cssText = `
-    padding: 16px 24px;
-    border-bottom: 1px solid #e1e4e8;
-    background: #f6f8fa;
-  `;
+  header.className = "figma-diff-header";
   const headerTitle = document.createElement("h3");
-  headerTitle.style.cssText = "margin: 0; color: #24292e;";
   headerTitle.textContent = "Review Changes";
   header.appendChild(headerTitle);
 
   // Create split pane container
   const splitContainer = document.createElement("div");
-  splitContainer.style.cssText = `
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-    position: relative;
-  `;
+  splitContainer.className = "figma-diff-split-container";
 
   // Create left pane (original content)
   const leftPane = document.createElement("div");
-  leftPane.style.cssText = `
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid #e1e4e8;
-  `;
+  leftPane.className = "figma-diff-left-pane";
 
   const leftHeader = document.createElement("div");
-  leftHeader.style.cssText = `
-    padding: 12px 16px;
-    background: #f6f8fa;
-    border-bottom: 1px solid #e1e4e8;
-    font-weight: 600;
-    color: #24292e;
-    font-size: 14px;
-  `;
+  leftHeader.className = "figma-diff-left-header";
   leftHeader.textContent = "Original Content";
 
   const leftContent = document.createElement("textarea");
-  leftContent.style.cssText = `
-    flex: 1;
-    padding: 16px;
-    border: none;
-    resize: none;
-    outline: none;
-    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    background: #f8f9fa;
-    color: #656d76;
-  `;
+  leftContent.className = "figma-diff-left-content";
   leftContent.value = originalText;
   leftContent.readOnly = true;
 
@@ -1604,77 +1247,27 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
 
   // Create resize handle
   const resizeHandle = document.createElement("div");
-  resizeHandle.style.cssText = `
-    width: 4px;
-    background: #e1e4e8;
-    cursor: col-resize;
-    transition: background-color 0.2s;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-2px);
-    z-index: 10;
-  `;
-
-  resizeHandle.addEventListener("mouseenter", () => {
-    resizeHandle.style.background = "#0969da";
-  });
-
-  resizeHandle.addEventListener("mouseleave", () => {
-    resizeHandle.style.background = "#e1e4e8";
-  });
+  resizeHandle.className = "figma-diff-resize-handle";
 
   // Create right pane (new content - editable)
   const rightPane = document.createElement("div");
-  rightPane.style.cssText = `
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  `;
+  rightPane.className = "figma-diff-right-pane";
 
   // Create tab header for right pane
   const rightHeader = document.createElement("div");
-  rightHeader.style.cssText = `
-    background: #f6f8fa;
-    border-bottom: 1px solid #e1e4e8;
-    display: flex;
-    align-items: center;
-  `;
+  rightHeader.className = "figma-diff-right-header";
 
   // Create tab navigation
   const tabNav = document.createElement("div");
-  tabNav.style.cssText = `
-    display: flex;
-    flex: 1;
-  `;
+  tabNav.className = "figma-diff-tab-nav";
 
   const editTab = document.createElement("button");
   editTab.textContent = "Edit";
-  editTab.style.cssText = `
-    padding: 12px 16px;
-    background: white;
-    border: none;
-    border-bottom: 2px solid #fd8c73;
-    font-weight: 600;
-    color: #24292e;
-    font-size: 14px;
-    cursor: pointer;
-  `;
-  editTab.classList.add("active-tab");
+  editTab.className = "figma-diff-tab active";
 
   const previewTab = document.createElement("button");
   previewTab.textContent = "Preview";
-  previewTab.style.cssText = `
-    padding: 12px 16px;
-    background: #f6f8fa;
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-weight: 600;
-    color: #656d76;
-    font-size: 14px;
-    cursor: pointer;
-  `;
+  previewTab.className = "figma-diff-tab";
 
   tabNav.appendChild(editTab);
   tabNav.appendChild(previewTab);
@@ -1682,36 +1275,15 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
 
   // Create content container for tabs
   const rightContentContainer = document.createElement("div");
-  rightContentContainer.style.cssText = `
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  `;
+  rightContentContainer.className = "figma-diff-right-content-container";
 
   const rightContent = document.createElement("textarea");
-  rightContent.style.cssText = `
-    flex: 1;
-    padding: 16px;
-    border: none;
-    resize: none;
-    outline: none;
-    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    background: white;
-    display: block;
-  `;
+  rightContent.className = "figma-diff-right-content";
   rightContent.value = newText;
 
   // Create preview content container
   const previewContent = document.createElement("div");
-  previewContent.style.cssText = `
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-    background: white;
-    display: none;
-  `;
+  previewContent.className = "figma-diff-preview-content";
   safeSetHTML(previewContent, context.renderMarkdown(newText));
 
   rightContentContainer.appendChild(rightContent);
@@ -1719,51 +1291,15 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
 
   // Tab switching logic
   editTab.addEventListener("click", () => {
-    editTab.style.cssText = `
-      padding: 12px 16px;
-      background: white;
-      border: none;
-      border-bottom: 2px solid #fd8c73;
-      font-weight: 600;
-      color: #24292e;
-      font-size: 14px;
-      cursor: pointer;
-    `;
-    previewTab.style.cssText = `
-      padding: 12px 16px;
-      background: #f6f8fa;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-weight: 600;
-      color: #656d76;
-      font-size: 14px;
-      cursor: pointer;
-    `;
+    editTab.className = "figma-diff-tab active";
+    previewTab.className = "figma-diff-tab";
     rightContent.style.display = "block";
     previewContent.style.display = "none";
   });
 
   previewTab.addEventListener("click", () => {
-    previewTab.style.cssText = `
-      padding: 12px 16px;
-      background: white;
-      border: none;
-      border-bottom: 2px solid #fd8c73;
-      font-weight: 600;
-      color: #24292e;
-      font-size: 14px;
-      cursor: pointer;
-    `;
-    editTab.style.cssText = `
-      padding: 12px 16px;
-      background: #f6f8fa;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-weight: 600;
-      color: #656d76;
-      font-size: 14px;
-      cursor: pointer;
-    `;
+    previewTab.className = "figma-diff-tab active";
+    editTab.className = "figma-diff-tab";
     rightContent.style.display = "none";
     previewContent.style.display = "block";
     // Update preview content when switching to preview tab
@@ -1779,13 +1315,7 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
 
   // Create copy buttons container (below right pane)
   const copyButtonsContainer = document.createElement("div");
-  copyButtonsContainer.style.cssText = `
-    padding: 12px 16px;
-    border-top: 1px solid #e1e4e8;
-    background: #f8f9fa;
-    display: flex;
-    gap: 8px;
-  `;
+  copyButtonsContainer.className = "figma-diff-copy-buttons";
 
   // Create copy buttons
   const copyFullBtn = createStyledButton("Copy Full Content", "copy");
@@ -1843,14 +1373,7 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
 
   // Create footer with action buttons
   const footer = document.createElement("div");
-  footer.style.cssText = `
-    padding: 16px 24px;
-    border-top: 1px solid #e1e4e8;
-    background: #f6f8fa;
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-  `;
+  footer.className = "figma-diff-footer";
 
   const cancelBtn = createStyledButton("Cancel", "cancel");
   const approveBtn = createStyledButton("Approve & Apply", "approve");
@@ -1894,6 +1417,40 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   overlay.appendChild(modal);
 
   return overlay;
+}
+
+function createStyledButton(text, type) {
+  const button = document.createElement("button");
+  button.textContent = text;
+
+  switch (type) {
+    case "copy":
+      button.className = "figma-copy-btn";
+      break;
+    case "cancel":
+      button.className = "figma-cancel-footer-btn";
+      break;
+    case "approve":
+      button.className = "figma-approve-btn";
+      break;
+  }
+
+  return button;
+}
+
+function showButtonFeedback(button, message) {
+  const originalText = button.textContent;
+  button.textContent = message;
+  button.style.background = "#1f883d";
+  button.style.color = "white";
+  button.style.borderColor = "#1f883d";
+
+  setTimeout(() => {
+    button.textContent = originalText;
+    button.style.background = "";
+    button.style.color = "";
+    button.style.borderColor = "";
+  }, 1500);
 }
 
 // Initialize when page loads
