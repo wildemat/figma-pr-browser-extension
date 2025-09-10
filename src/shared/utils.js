@@ -30,7 +30,7 @@ async function fetchLatestVersion(fileId, figmaToken) {
 
 async function fetchNodeImageUrl(fileId, nodeId, figmaToken) {
   const response = await fetch(
-    `https://api.figma.com/v1/images/${fileId}?ids=${nodeId}&format=png&scale=2`,
+    `https://api.figma.com/v1/images/${fileId}?ids=${nodeId}&format=jpg&scale=2&use_absolute_bounds=true`,
     {
       headers: { "X-Figma-Token": figmaToken },
     },

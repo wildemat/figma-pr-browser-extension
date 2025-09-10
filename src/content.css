@@ -315,6 +315,14 @@
   color: #0366d6 !important;
 }
 
+/* Constrain images to fit within the preview container */
+.figma-diff-preview-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+}
+
 .figma-diff-copy-buttons {
   padding: 12px 16px;
   border-top: 1px solid #e1e4e8;

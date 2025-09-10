@@ -56,7 +56,7 @@ export async function fetchLatestVersion(fileId, figmaToken) {
  * @returns {Promise<string>} - Image URL
  */
 export async function fetchNodeImageUrl(fileId, nodeId, figmaToken) {
-  const url = `${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.NODE_IMAGES(fileId)}?ids=${nodeId}&format=${FIGMA_API.IMAGE_FORMAT}`;
+  const url = `${FIGMA_API.BASE_URL}${FIGMA_API.ENDPOINTS.NODE_IMAGES(fileId)}?ids=${nodeId}&format=${FIGMA_API.IMAGE_FORMAT}&use_absolute_bounds=true`;
 
   const response = await fetch(url, {
     headers: {

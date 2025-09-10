@@ -130,7 +130,7 @@ export const FIGMA_API = {
     "Content-Type": "application/json",
   },
 
-  IMAGE_FORMAT: "png",
+  IMAGE_FORMAT: "jpg",
 
   ERROR_CODES: {
     UNAUTHORIZED: [401, 403],
