@@ -1,6 +1,6 @@
 {
   "name": "figma-pr-browser-extension",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "description": "Browser extension that processes Figma links in GitHub PR descriptions",
   "scripts": {
     "build": "node build.js",
@@ -10,6 +10,7 @@
     "dev": "node build.js && echo 'Built both extensions. Load the chrome/ or firefox/ directory in your browser.'",
     "lint": "npx prettier --check \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
     "lint:fix": "npx prettier --write \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
+    "version:bump": "node scripts/bump-version.js",
     "prepare": "husky"
   },
   "keywords": [

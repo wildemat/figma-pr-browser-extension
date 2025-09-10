@@ -1,1 +1,6 @@
+# Bump version automatically on every commit
+node scripts/bump-version.js
+git add package.json src/chrome/manifest.json src/firefox/manifest.json
+
+# Run linting
 npx lint-staged

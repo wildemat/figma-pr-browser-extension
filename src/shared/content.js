@@ -972,7 +972,11 @@ class FigmaPRProcessor {
     // Create preview content container
     const previewContent = document.createElement("div");
     previewContent.className = "figma-diff-preview-content";
-    this.safeSetHTML(previewContent, this.renderMarkdown(newText));
+
+    // Render markdown asynchronously
+    this.renderMarkdown(newText).then((html) => {
+      this.safeSetHTML(previewContent, html);
+    });
 
     rightContentContainer.appendChild(rightContent);
     rightContentContainer.appendChild(previewContent);
@@ -991,16 +995,17 @@ class FigmaPRProcessor {
       rightContent.style.display = "none";
       previewContent.style.display = "block";
       // Update preview content when switching to preview tab
-      this.safeSetHTML(previewContent, this.renderMarkdown(rightContent.value));
+      this.renderMarkdown(rightContent.value).then((html) => {
+        this.safeSetHTML(previewContent, html);
+      });
     });
 
     // Update preview when content changes in edit mode
     rightContent.addEventListener("input", () => {
       if (previewContent.style.display === "block") {
-        this.safeSetHTML(
-          previewContent,
-          this.renderMarkdown(rightContent.value),
-        );
+        this.renderMarkdown(rightContent.value).then((html) => {
+          this.safeSetHTML(previewContent, html);
+        });
       }
     });
 
@@ -1160,11 +1165,20 @@ class FigmaPRProcessor {
     return null;
   }
 
-  renderMarkdown(text) {
-    // Use Snarkdown library for markdown rendering
-    const html = snarkdown(text);
-
-    return `<div class="figma-markdown-content">${html}</div>`;
+  async renderMarkdown(text) {
+    // Use GitHub's markdown API for consistent rendering
+    try {
+      return await renderMarkdown(text);
+    } catch (error) {
+      console.warn("GitHub markdown rendering failed, using fallback:", error);
+      // Fallback to simple HTML escaping if both GitHub API and snarkdown fail
+      const escapedText = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
+      return `<div class="figma-markdown-content">${escapedText}</div>`;
+    }
   }
 
   safeSetHTML(element, htmlContent) {
@@ -1284,7 +1298,11 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create preview content container
   const previewContent = document.createElement("div");
   previewContent.className = "figma-diff-preview-content";
-  safeSetHTML(previewContent, context.renderMarkdown(newText));
+
+  // Render markdown asynchronously
+  context.renderMarkdown(newText).then((html) => {
+    safeSetHTML(previewContent, html);
+  });
 
   rightContentContainer.appendChild(rightContent);
   rightContentContainer.appendChild(previewContent);
@@ -1303,13 +1321,17 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     rightContent.style.display = "none";
     previewContent.style.display = "block";
     // Update preview content when switching to preview tab
-    safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
+    context.renderMarkdown(rightContent.value).then((html) => {
+      safeSetHTML(previewContent, html);
+    });
   });
 
   // Update preview when content changes in edit mode
   rightContent.addEventListener("input", () => {
     if (previewContent.style.display === "block") {
-      safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
+      context.renderMarkdown(rightContent.value).then((html) => {
+        safeSetHTML(previewContent, html);
+      });
     }
   });
 
