@@ -1,15 +1,13 @@
 {
   "manifest_version": 2,
   "name": "Figma PR Links",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
   "browser_specific_settings": {
     "gecko": {
       "id": "figma-pr-links@wildmat.dev",
       "data_collection_permissions": {
-        "required": [
-          "none"
-        ]
+        "required": ["none"]
       }
     }
   },
@@ -26,14 +24,8 @@
         "https://github.com/*/pull/*",
         "https://github.com/*/compare/*"
       ],
-      "js": [
-        "snarkdown.js",
-        "utils.js",
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ]
+      "js": ["snarkdown.js", "utils.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
   "browser_action": {
@@ -47,10 +39,7 @@
     }
   },
   "background": {
-    "scripts": [
-      "debug.js",
-      "background.js"
-    ],
+    "scripts": ["debug.js", "background.js"],
     "persistent": true
   },
   "icons": {

@@ -850,15 +850,40 @@ class FigmaPRProcessor {
       const title = document.createElement("h3");
       title.textContent = "Configure Token";
 
-      const instructions = document.createElement("p");
+      const instructions = document.createElement("div");
       instructions.className = "figma-instructions";
-      instructions.textContent =
-        "To configure your Figma API token:\n\n1. Click the extension icon in your browser toolbar\n2. Get a token from Figma Settings\n3. Paste it in the extension popup\n4. Click Save Settings\n5. Return here and try again";
 
-      const settingsLink = document.createElement("a");
-      settingsLink.href = "https://www.figma.com/settings";
-      settingsLink.target = "_blank";
-      settingsLink.textContent = "Figma Settings";
+      const instructionsText = document.createElement("p");
+      instructionsText.textContent = "To configure your Figma API token:";
+
+      const instructionsList = document.createElement("ol");
+
+      const steps = [
+        "Click the extension icon in your browser toolbar",
+        "Get a token from Figma Settings",
+        "Paste it in the extension popup",
+        "Click Save Settings",
+        "Return here and try again",
+      ];
+
+      steps.forEach((stepText, index) => {
+        const listItem = document.createElement("li");
+        if (index === 1) {
+          // Add link to step 2
+          listItem.textContent = "Get a token from ";
+          const link = document.createElement("a");
+          link.href = "https://www.figma.com/settings";
+          link.target = "_blank";
+          link.textContent = "Figma Settings";
+          listItem.appendChild(link);
+        } else {
+          listItem.textContent = stepText;
+        }
+        instructionsList.appendChild(listItem);
+      });
+
+      instructions.appendChild(instructionsText);
+      instructions.appendChild(instructionsList);
 
       const closeBtn = document.createElement("button");
       closeBtn.id = "close-instructions-btn";
@@ -1418,11 +1443,15 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   });
 
   cancelBtn.addEventListener("click", () => {
+    if (overlay.cleanup) overlay.cleanup();
+    if (overlay.removeEventListeners) overlay.removeEventListeners();
     document.body.removeChild(overlay);
     context.showInfo("Changes cancelled");
   });
 
   approveBtn.addEventListener("click", () => {
+    if (overlay.cleanup) overlay.cleanup();
+    if (overlay.removeEventListeners) overlay.removeEventListeners();
     document.body.removeChild(overlay);
     onApprove(rightContent.value);
   });
@@ -1433,6 +1462,48 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   modal.appendChild(footer);
 
   overlay.appendChild(modal);
+
+  // Add scroll isolation when modal is shown
+  const originalBodyOverflow = document.body.style.overflow;
+  const originalBodyHeight = document.body.style.height;
+
+  // Lock background scroll
+  document.body.style.overflow = "hidden";
+  document.body.style.height = "100%";
+
+  // Prevent scroll events from propagating to the background
+  modal.addEventListener("wheel", (e) => {
+    e.stopPropagation();
+  });
+
+  modal.addEventListener("touchmove", (e) => {
+    e.stopPropagation();
+  });
+
+  // Store cleanup functions in overlay for later use
+  overlay.cleanup = () => {
+    document.body.style.overflow = originalBodyOverflow;
+    document.body.style.height = originalBodyHeight;
+  };
+
+  // Handle escape key and overlay clicks
+  const handleClose = (e) => {
+    if (e.key === "Escape" || e.target === overlay) {
+      if (overlay.cleanup) overlay.cleanup();
+      document.body.removeChild(overlay);
+      document.removeEventListener("keydown", handleClose);
+      context.showInfo("Changes cancelled");
+    }
+  };
+
+  // Store event cleanup function
+  overlay.removeEventListeners = () => {
+    document.removeEventListener("keydown", handleClose);
+  };
+
+  // Add event listeners for escape key and overlay click
+  document.addEventListener("keydown", handleClose);
+  overlay.addEventListener("click", handleClose);
 
   return overlay;
 }

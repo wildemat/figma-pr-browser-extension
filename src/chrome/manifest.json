@@ -1,12 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Figma PR Links",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://github.com/*",
     "https://api.figma.com/*",
@@ -18,14 +15,8 @@
         "https://github.com/*/pull/*",
         "https://github.com/*/compare/*"
       ],
-      "js": [
-        "snarkdown.js",
-        "utils.js",
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ]
+      "js": ["snarkdown.js", "utils.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
   "action": {
