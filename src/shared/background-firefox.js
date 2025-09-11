@@ -25,7 +25,54 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true; // Keep message channel open for async response
   }
+
+  if (message.type === "RENDER_MARKDOWN") {
+    renderMarkdownInBackground(message.text, message.options)
+      .then((html) => {
+        sendResponse({ success: true, html: html });
+      })
+      .catch((error) => {
+        console.error("Background markdown rendering failed:", error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep message channel open for async response
+  }
 });
+
+async function renderMarkdownInBackground(text, options = {}) {
+  const { mode = "gfm", context = null, timeout = 10000 } = options;
+
+  try {
+    console.log("Background script: Attempting GitHub markdown API request...");
+
+    const response = await fetch("https://api.github.com/markdown", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "Figma-PR-Extension/1.0",
+      },
+      body: JSON.stringify({
+        text: text,
+        mode: mode,
+        ...(context && { context: context }),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `GitHub API returned ${response.status} (${response.statusText})`,
+      );
+    }
+
+    const html = await response.text();
+    console.log("Background script: GitHub markdown API successful");
+    return html;
+  } catch (error) {
+    console.warn("Background script: GitHub API failed:", error.message);
+    throw error;
+  }
+}
 
 async function testFigmaToken(token) {
   try {

@@ -973,10 +973,7 @@ class FigmaPRProcessor {
     const previewContent = document.createElement("div");
     previewContent.className = "figma-diff-preview-content";
 
-    // Render markdown asynchronously
-    this.renderMarkdown(newText).then((html) => {
-      this.safeSetHTML(previewContent, html);
-    });
+    this.safeSetHTML(previewContent, this.renderMarkdown(newText));
 
     rightContentContainer.appendChild(rightContent);
     rightContentContainer.appendChild(previewContent);
@@ -995,17 +992,16 @@ class FigmaPRProcessor {
       rightContent.style.display = "none";
       previewContent.style.display = "block";
       // Update preview content when switching to preview tab
-      this.renderMarkdown(rightContent.value).then((html) => {
-        this.safeSetHTML(previewContent, html);
-      });
+      this.safeSetHTML(previewContent, this.renderMarkdown(rightContent.value));
     });
 
     // Update preview when content changes in edit mode
     rightContent.addEventListener("input", () => {
       if (previewContent.style.display === "block") {
-        this.renderMarkdown(rightContent.value).then((html) => {
-          this.safeSetHTML(previewContent, html);
-        });
+        this.safeSetHTML(
+          previewContent,
+          this.renderMarkdown(rightContent.value),
+        );
       }
     });
 
@@ -1165,20 +1161,11 @@ class FigmaPRProcessor {
     return null;
   }
 
-  async renderMarkdown(text) {
-    // Use GitHub's markdown API for consistent rendering
-    try {
-      return await renderMarkdown(text);
-    } catch (error) {
-      console.warn("GitHub markdown rendering failed, using fallback:", error);
-      // Fallback to simple HTML escaping if both GitHub API and snarkdown fail
-      const escapedText = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\n/g, "<br>");
-      return `<div class="figma-markdown-content">${escapedText}</div>`;
-    }
+  renderMarkdown(text) {
+    // Use Snarkdown library for markdown rendering
+    const html = snarkdown(text);
+
+    return `<div class="figma-markdown-content">${html}</div>`;
   }
 
   safeSetHTML(element, htmlContent) {
@@ -1299,10 +1286,7 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   const previewContent = document.createElement("div");
   previewContent.className = "figma-diff-preview-content";
 
-  // Render markdown asynchronously
-  context.renderMarkdown(newText).then((html) => {
-    safeSetHTML(previewContent, html);
-  });
+  safeSetHTML(previewContent, context.renderMarkdown(newText));
 
   rightContentContainer.appendChild(rightContent);
   rightContentContainer.appendChild(previewContent);
@@ -1321,17 +1305,13 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
     rightContent.style.display = "none";
     previewContent.style.display = "block";
     // Update preview content when switching to preview tab
-    context.renderMarkdown(rightContent.value).then((html) => {
-      safeSetHTML(previewContent, html);
-    });
+    safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
   });
 
   // Update preview when content changes in edit mode
   rightContent.addEventListener("input", () => {
     if (previewContent.style.display === "block") {
-      context.renderMarkdown(rightContent.value).then((html) => {
-        safeSetHTML(previewContent, html);
-      });
+      safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
     }
   });
 

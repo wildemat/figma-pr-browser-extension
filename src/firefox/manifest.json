@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Figma PR Links",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
   "browser_specific_settings": {
     "gecko": {
@@ -17,7 +17,8 @@
     "storage",
     "activeTab",
     "https://github.com/*",
-    "https://api.figma.com/*"
+    "https://api.figma.com/*",
+    "https://api.github.com/*"
   ],
   "content_scripts": [
     {
@@ -26,7 +27,7 @@
         "https://github.com/*/compare/*"
       ],
       "js": [
-        "github-markdown.js",
+        "snarkdown.js",
         "utils.js",
         "content.js"
       ],
@@ -50,7 +51,7 @@
       "debug.js",
       "background.js"
     ],
-    "persistent": false
+    "persistent": true
   },
   "icons": {
     "16": "icons/icon-16.png",

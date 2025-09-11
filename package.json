@@ -1,6 +1,6 @@
 {
   "name": "figma-pr-browser-extension",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "Browser extension that processes Figma links in GitHub PR descriptions",
   "scripts": {
     "build": "node build.js",

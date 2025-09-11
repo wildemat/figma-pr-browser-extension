@@ -63,7 +63,7 @@ function buildExtension(browser) {
   copyFile("src/shared/popup.js", `${buildDir}/popup.js`);
   copyFile("src/shared/popup.html", `${buildDir}/popup.html`);
   copyFile("src/shared/utils.js", `${buildDir}/utils.js`);
-  copyFile("src/shared/github-markdown.js", `${buildDir}/github-markdown.js`);
+  copyFile("src/shared/snarkdown.js", `${buildDir}/snarkdown.js`);
 
   // Copy browser-specific files
   copyFile(`src/${browser}/manifest.json`, `${buildDir}/manifest.json`);

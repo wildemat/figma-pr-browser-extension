@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Figma PR Links",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
   "permissions": [
     "storage",
@@ -9,7 +9,8 @@
   ],
   "host_permissions": [
     "https://github.com/*",
-    "https://api.figma.com/*"
+    "https://api.figma.com/*",
+    "https://api.github.com/*"
   ],
   "content_scripts": [
     {
@@ -18,7 +19,7 @@
         "https://github.com/*/compare/*"
       ],
       "js": [
-        "github-markdown.js",
+        "snarkdown.js",
         "utils.js",
         "content.js"
       ],
