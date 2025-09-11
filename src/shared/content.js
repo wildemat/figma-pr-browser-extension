@@ -102,9 +102,7 @@ class FigmaPRProcessor {
     // Create process button
     const button = document.createElement("button");
     button.id = "figma-process-btn";
-    button.className = "btn btn-sm btn-outline";
     button.textContent = "🎨 Process Figma Links";
-    button.style.marginLeft = "8px";
 
     // Try edit mode specific locations first
     const editModeLocations = [
@@ -940,219 +938,6 @@ class FigmaPRProcessor {
     document.body.appendChild(modal);
   }
 
-  createDiffPreviewModal(originalText, newText, onApprove) {
-    // Create modal overlay
-    const overlay = document.createElement("div");
-    overlay.className = "figma-diff-overlay";
-
-    // Create modal content
-    const modal = document.createElement("div");
-    modal.className = "figma-diff-modal";
-
-    // Create header
-    const header = document.createElement("div");
-    header.className = "figma-diff-header";
-    const headerTitle = document.createElement("h3");
-    headerTitle.textContent = "Review Changes";
-    header.appendChild(headerTitle);
-
-    // Create split pane container
-    const splitContainer = document.createElement("div");
-    splitContainer.className = "figma-diff-split-container";
-
-    // Create left pane (original content)
-    const leftPane = document.createElement("div");
-    leftPane.className = "figma-diff-left-pane";
-
-    const leftHeader = document.createElement("div");
-    leftHeader.className = "figma-diff-left-header";
-    leftHeader.textContent = "Original Content";
-
-    const leftContent = document.createElement("textarea");
-    leftContent.className = "figma-diff-left-content";
-    leftContent.value = originalText;
-    leftContent.readOnly = true;
-
-    leftPane.appendChild(leftHeader);
-    leftPane.appendChild(leftContent);
-
-    // Create resize handle
-    const resizeHandle = document.createElement("div");
-    resizeHandle.className = "figma-diff-resize-handle";
-
-    // Create right pane (new content - editable)
-    const rightPane = document.createElement("div");
-    rightPane.className = "figma-diff-right-pane";
-
-    // Create tab header for right pane
-    const rightHeader = document.createElement("div");
-    rightHeader.className = "figma-diff-right-header";
-
-    // Create tab navigation
-    const tabNav = document.createElement("div");
-    tabNav.className = "figma-diff-tab-nav";
-
-    const editTab = document.createElement("button");
-    editTab.textContent = "Edit";
-    editTab.className = "figma-diff-tab active";
-
-    const previewTab = document.createElement("button");
-    previewTab.textContent = "Preview";
-    previewTab.className = "figma-diff-tab";
-
-    tabNav.appendChild(editTab);
-    tabNav.appendChild(previewTab);
-    rightHeader.appendChild(tabNav);
-
-    // Create content container for tabs
-    const rightContentContainer = document.createElement("div");
-    rightContentContainer.className = "figma-diff-right-content-container";
-
-    const rightContent = document.createElement("textarea");
-    rightContent.className = "figma-diff-right-content";
-    rightContent.value = newText;
-
-    // Create preview content container
-    const previewContent = document.createElement("div");
-    previewContent.className = "figma-diff-preview-content";
-    this.safeSetHTML(previewContent, this.renderMarkdown(newText));
-
-    rightContentContainer.appendChild(rightContent);
-    rightContentContainer.appendChild(previewContent);
-
-    // Tab switching logic
-    editTab.addEventListener("click", () => {
-      editTab.className = "figma-diff-tab active";
-      previewTab.className = "figma-diff-tab";
-      rightContent.style.display = "block";
-      previewContent.style.display = "none";
-    });
-
-    previewTab.addEventListener("click", () => {
-      previewTab.className = "figma-diff-tab active";
-      editTab.className = "figma-diff-tab";
-      rightContent.style.display = "none";
-      previewContent.style.display = "block";
-      // Update preview content when switching to preview tab
-      this.safeSetHTML(previewContent, this.renderMarkdown(rightContent.value));
-    });
-
-    // Update preview when content changes in edit mode
-    rightContent.addEventListener("input", () => {
-      if (previewContent.style.display === "block") {
-        this.safeSetHTML(
-          previewContent,
-          this.renderMarkdown(rightContent.value),
-        );
-      }
-    });
-
-    // Create copy buttons container (below right pane)
-    const copyButtonsContainer = document.createElement("div");
-    copyButtonsContainer.className = "figma-diff-copy-buttons";
-
-    // Create copy buttons
-    const copyFullBtn = this.createStyledButton("Copy Full Content", "copy");
-    const copySpecsBtn = this.createStyledButton("Copy Figma Section", "copy");
-
-    copyButtonsContainer.appendChild(copyFullBtn);
-    copyButtonsContainer.appendChild(copySpecsBtn);
-
-    rightPane.appendChild(rightHeader);
-    rightPane.appendChild(rightContentContainer);
-    rightPane.appendChild(copyButtonsContainer);
-
-    // Add resize functionality
-    let isResizing = false;
-    let startX = 0;
-    let startLeftWidth = 0;
-
-    resizeHandle.addEventListener("mousedown", (e) => {
-      isResizing = true;
-      startX = e.clientX;
-      startLeftWidth = leftPane.offsetWidth;
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-
-      e.preventDefault();
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      if (!isResizing) return;
-
-      const deltaX = e.clientX - startX;
-      const containerWidth = splitContainer.offsetWidth;
-      const newLeftWidth = startLeftWidth + deltaX;
-      const leftPercentage = Math.max(
-        20,
-        Math.min(80, (newLeftWidth / containerWidth) * 100),
-      );
-
-      leftPane.style.width = `${leftPercentage}%`;
-      rightPane.style.width = `${100 - leftPercentage}%`;
-      resizeHandle.style.left = `${leftPercentage}%`;
-    });
-
-    document.addEventListener("mouseup", () => {
-      if (isResizing) {
-        isResizing = false;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      }
-    });
-
-    splitContainer.appendChild(leftPane);
-    splitContainer.appendChild(resizeHandle);
-    splitContainer.appendChild(rightPane);
-
-    // Create footer with action buttons
-    const footer = document.createElement("div");
-    footer.className = "figma-diff-footer";
-
-    const cancelBtn = this.createStyledButton("Cancel", "cancel");
-    const approveBtn = this.createStyledButton("Approve & Apply", "approve");
-
-    footer.appendChild(cancelBtn);
-    footer.appendChild(approveBtn);
-
-    // Add event listeners
-    copyFullBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText(rightContent.value);
-      this.showButtonFeedback(copyFullBtn, "Copied!");
-    });
-
-    copySpecsBtn.addEventListener("click", () => {
-      const currentText = rightContent.value;
-      const specsSection = this.extractSpecsSection(currentText);
-
-      if (specsSection) {
-        navigator.clipboard.writeText(specsSection);
-        this.showButtonFeedback(copySpecsBtn, "Copied!");
-      } else {
-        this.showError("No specs section found");
-      }
-    });
-
-    cancelBtn.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      this.showInfo("Changes cancelled");
-    });
-
-    approveBtn.addEventListener("click", () => {
-      document.body.removeChild(overlay);
-      onApprove(rightContent.value);
-    });
-
-    // Assemble modal
-    modal.appendChild(header);
-    modal.appendChild(splitContainer);
-    modal.appendChild(footer);
-
-    overlay.appendChild(modal);
-
-    return overlay;
-  }
-
   createStyledButton(text, type) {
     const button = document.createElement("button");
     button.textContent = text;
@@ -1181,9 +966,9 @@ class FigmaPRProcessor {
 
     setTimeout(() => {
       button.textContent = originalText;
-      button.style.background = "white";
-      button.style.color = "#24292e";
-      button.style.borderColor = "#d0d7de";
+      button.style.background = "";
+      button.style.color = "";
+      button.style.borderColor = "";
     }, 1500);
   }
 
@@ -1232,25 +1017,6 @@ class FigmaPRProcessor {
 
 // Include the shared modal functions directly in the content script
 // (since we can't use imports in content scripts)
-
-function safeSetHTML(element, htmlContent) {
-  // For markdown content, we use DOMParser for safer HTML parsing
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, "text/html");
-
-    // Clear existing content
-    element.textContent = "";
-
-    // Move all child nodes from body to the target element
-    while (doc.body.firstChild) {
-      element.appendChild(doc.body.firstChild);
-    }
-  } catch (error) {
-    // Fallback to text content if parsing fails
-    element.textContent = "Error rendering content";
-  }
-}
 
 function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create modal overlay
@@ -1327,7 +1093,7 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   // Create preview content container
   const previewContent = document.createElement("div");
   previewContent.className = "figma-diff-preview-content";
-  safeSetHTML(previewContent, context.renderMarkdown(newText));
+  context.safeSetHTML(previewContent, context.renderMarkdown(newText));
 
   rightContentContainer.appendChild(rightContent);
   rightContentContainer.appendChild(previewContent);
@@ -1336,23 +1102,33 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   editTab.addEventListener("click", () => {
     editTab.className = "figma-diff-tab active";
     previewTab.className = "figma-diff-tab";
-    rightContent.style.display = "block";
-    previewContent.style.display = "none";
+    rightContent.classList.remove("figma-hidden");
+    rightContent.classList.add("figma-visible");
+    previewContent.classList.remove("figma-visible");
+    previewContent.classList.add("figma-hidden");
   });
 
   previewTab.addEventListener("click", () => {
     previewTab.className = "figma-diff-tab active";
     editTab.className = "figma-diff-tab";
-    rightContent.style.display = "none";
-    previewContent.style.display = "block";
+    rightContent.classList.remove("figma-visible");
+    rightContent.classList.add("figma-hidden");
+    previewContent.classList.remove("figma-hidden");
+    previewContent.classList.add("figma-visible");
     // Update preview content when switching to preview tab
-    safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
+    context.safeSetHTML(
+      previewContent,
+      context.renderMarkdown(rightContent.value),
+    );
   });
 
   // Update preview when content changes in edit mode
   rightContent.addEventListener("input", () => {
-    if (previewContent.style.display === "block") {
-      safeSetHTML(previewContent, context.renderMarkdown(rightContent.value));
+    if (previewContent.classList.contains("figma-visible")) {
+      context.safeSetHTML(
+        previewContent,
+        context.renderMarkdown(rightContent.value),
+      );
     }
   });
 
@@ -1506,40 +1282,6 @@ function createDiffPreviewModal(originalText, newText, onApprove, context) {
   overlay.addEventListener("click", handleClose);
 
   return overlay;
-}
-
-function createStyledButton(text, type) {
-  const button = document.createElement("button");
-  button.textContent = text;
-
-  switch (type) {
-    case "copy":
-      button.className = "figma-copy-btn";
-      break;
-    case "cancel":
-      button.className = "figma-cancel-footer-btn";
-      break;
-    case "approve":
-      button.className = "figma-approve-btn";
-      break;
-  }
-
-  return button;
-}
-
-function showButtonFeedback(button, message) {
-  const originalText = button.textContent;
-  button.textContent = message;
-  button.style.background = "#1f883d";
-  button.style.color = "white";
-  button.style.borderColor = "#1f883d";
-
-  setTimeout(() => {
-    button.textContent = originalText;
-    button.style.background = "";
-    button.style.color = "";
-    button.style.borderColor = "";
-  }, 1500);
 }
 
 // Initialize when page loads
