@@ -1,15 +1,16 @@
 {
   "name": "figma-pr-browser-extension",
   "version": "1.0.2",
+  "type": "module",
   "description": "Browser extension that processes Figma links in GitHub PR descriptions",
   "scripts": {
-    "build": "node build.js",
-    "build:chrome": "node build.js chrome",
-    "build:firefox": "node build.js firefox",
-    "clean": "node build.js clean",
-    "dev": "node build.js && echo 'Built both extensions. Load the chrome/ or firefox/ directory in your browser.'",
-    "lint": "npx prettier --check \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
-    "lint:fix": "npx prettier --write \"**/*.{js,html,json,md,css}\" --ignore-path .gitignore",
+    "build": "tsc && vite build && node scripts/post-build.js",
+    "build:chrome": "npm run build && node scripts/package-chrome.js",
+    "build:firefox": "npm run build && node scripts/package-firefox.js",
+    "clean": "rm -rf build/ dist/",
+    "dev": "npm run build && echo 'Built extensions. Load the build/chrome/ or build/firefox/ directory in your browser.'",
+    "lint": "npx prettier --check \"**/*.{js,ts,tsx,html,json,md,css}\" --ignore-path .gitignore",
+    "lint:fix": "npx prettier --write \"**/*.{js,ts,tsx,html,json,md,css}\" --ignore-path .gitignore",
     "prepare": "husky"
   },
   "keywords": [
@@ -25,12 +26,33 @@
     "node": ">=14.0.0"
   },
   "devDependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/node": "^24.3.1",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "autoprefixer": "^10.4.21",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.6"
+    "lint-staged": "^16.1.6",
+    "lucide-react": "^0.544.0",
+    "postcss": "^8.5.6",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.13",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
   },
   "lint-staged": {
     "*.{js,html,json,md,css}": [
       "npx prettier --write"
     ]
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   }
 }
