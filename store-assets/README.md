@@ -12,6 +12,7 @@ All screenshots are formatted for Chrome Web Store requirements:
 
 1. **01-before-processing.png** - Shows GitHub PR with raw Figma links before processing
 2. **02-after-processing.png** - Shows the same PR with rich design specifications after processing
+3. **interface.png** - Shows the extension popup interface
 
 ### Additional Screenshots Needed (Optional but Recommended)
 

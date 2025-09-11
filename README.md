@@ -26,30 +26,6 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 | Chrome/Chromium | ✅ Supported | `build/chrome/`  |
 | Firefox         | ✅ Supported | `build/firefox/` |
 
-## Installation
-
-### For Development/Testing
-
-1. **Clone the repository** and build the extensions:
-
-   ```bash
-   git clone <repo-url>
-   cd figma-pr-browser-extension
-   npm install
-   npm run build
-   ```
-
-2. **Load the extension**:
-   - **Chrome**: Navigate to `chrome://extensions/` → Enable "Developer mode" → Click "Load unpacked" → Select the `build/chrome/` folder
-   - **Firefox**: Navigate to `about:debugging` → Click "This Firefox" → Click "Load Temporary Add-on" → Select `build/firefox/manifest.json`
-
-### For Distribution
-
-Use the pre-built zip files from `build/releases/`:
-
-- `figma-pr-extension-chrome.zip` for Chrome Web Store
-- `figma-pr-extension-firefox.zip` for Firefox Add-ons
-
 ## Setup
 
 1. **Install the extension** for your browser
@@ -110,31 +86,57 @@ Your Figma API token needs these scopes:
 
 ## Development
 
+1. **Clone the repository** and build the extensions:
+
+   ```bash
+   git clone https://github.com/wildemat/figma-pr-browser-extension.git
+   cd figma-pr-browser-extension
+   npm install
+   npm run build
+   ```
+
+2. **Load the extension**:
+   - **Chrome**: Navigate to `chrome://extensions/` → Enable "Developer mode" → Click "Load unpacked" → Select the `build/chrome/` folder
+   - **Firefox**: Navigate to `about:debugging` → Click "This Firefox" → Click "Load Temporary Add-on" → Select `build/firefox/manifest.json`
+
+### For Distribution
+
+Use the pre-built zip files from `build/releases/`:
+
+- `figma-pr-extension-chrome.zip` for Chrome Web Store
+- `figma-pr-extension-firefox.zip` for Firefox Add-ons
+
 ### Project Structure
 
 ```
 figma-pr-browser-extension/
 ├── src/
-│   ├── shared/            # Cross-browser source files
-│   │   ├── content.js     # Main content script
-│   │   ├── popup.js       # Popup functionality
-│   │   ├── popup.html     # Settings popup
-│   │   ├── utils.js       # Utility functions
-│   │   ├── snarkdown.js   # Markdown parser
-│   │   ├── background-chrome.js    # Chrome service worker
-│   │   ├── background-firefox.js   # Firefox background script
-│   │   └── debug-firefox.js        # Firefox debug utilities
-│   ├── chrome/            # Chrome-specific files
-│   │   └── manifest.json  # Chrome manifest v3
-│   ├── firefox/           # Firefox-specific files
-│   │   └── manifest.json  # Firefox manifest v2
-│   ├── icons/            # Extension icons
-│   └── content.css       # Content script styles
-├── build/                # Generated builds (not committed)
-│   ├── chrome/           # Built Chrome extension
-│   ├── firefox/          # Built Firefox extension
-│   └── releases/         # Distribution zip files
-└── build.js              # Build script
+│   ├── shared/                      # Cross-browser source files
+│   │   ├── content.js               # Main content script
+│   │   ├── popup.js                 # Popup functionality
+│   │   ├── popup.html               # Settings popup
+│   │   ├── utils.js                 # Utility functions
+│   │   ├── snarkdown.js             # Markdown parser
+│   │   ├── background-chrome.js     # Chrome service worker
+│   │   ├── background-firefox.js    # Firefox background script
+│   │   └── debug-firefox.js         # Firefox debug utilities
+│   ├── chrome/                      # Chrome-specific files
+│   │   └── manifest.json            # Chrome manifest v3
+│   ├── firefox/                     # Firefox-specific files
+│   │   └── manifest.json            # Firefox manifest v2
+│   ├── icons/                       # Extension icons
+│   └── content.css                  # Content script styles
+├── scripts/                         # Development scripts
+│   └── bump-version.js              # Version bumping utility
+├── store-assets/                    # Store listing assets
+│   ├── store-description.md         # Original store description
+│   ├── store-description-chrome.txt # Chrome Web Store description
+│   └── store-description-firefox.md # Firefox Add-ons description
+├── build/                           # Generated builds (not committed)
+│   ├── chrome/                      # Built Chrome extension
+│   ├── firefox/                     # Built Firefox extension
+│   └── releases/                    # Distribution zip files
+└── build.js                         # Build script
 ```
 
 ### Key Differences Between Browsers
@@ -159,9 +161,13 @@ figma-pr-browser-extension/
 ### Development Scripts
 
 - `npm run build` - Build both Chrome and Firefox extensions with zip files
+- `npm run build:chrome` - Build only Chrome extension
+- `npm run build:firefox` - Build only Firefox extension
 - `npm run dev` - Build both extensions and show loading instructions
 - `npm run lint` - Check code formatting with Prettier
 - `npm run lint:fix` - Fix code formatting issues automatically
+- `npm run version:bump` - Increment patch version in all manifests and package.json
+- `npm run clean` - Clean build directories
 
 ## Contributing
 
@@ -172,7 +178,7 @@ We welcome contributions! To get started:
 3. **Follow the existing code patterns** for browser compatibility
 4. **Update documentation** if you add new features
 
-For questions about the codebase architecture, security practices, or troubleshooting, the prompts file contains helpful starter questions for AI assistants. 4. **Check browser console** for debug logs
+For questions about the codebase architecture, security practices, or troubleshooting, the prompts file contains helpful starter questions for AI assistants.
 
 ## Troubleshooting
 
@@ -194,13 +200,20 @@ For questions about the codebase architecture, security practices, or troublesho
 - Verify Figma links are properly formatted
 - Ensure you have access to the Figma files
 
-## Contributing
+### Pre-commit Hooks
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test on both Chrome and Firefox
-5. Submit a pull request
+The project uses Husky and lint-staged for automated code formatting:
+
+- **Prettier formatting** runs automatically on commit
+- **Version bumping** happens automatically on every commit
+- **Linting** ensures code quality
+
+To set up the hooks after cloning:
+
+```bash
+npm install
+npm run prepare  # Sets up Husky hooks
+```
 
 ## License
 

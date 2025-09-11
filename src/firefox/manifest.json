@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Figma PR Links",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
   "browser_specific_settings": {
     "gecko": {
