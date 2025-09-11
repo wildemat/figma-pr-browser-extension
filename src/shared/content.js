@@ -794,20 +794,38 @@ class FigmaPRProcessor {
 
     // Set the extension icon dynamically based on browser
     const extensionIcon = modal.querySelector("#extension-icon");
-    const extensionId =
-      typeof chrome !== "undefined" && chrome.runtime
-        ? chrome.runtime.id
-        : typeof browser !== "undefined" && browser.runtime
-          ? browser.runtime.id
-          : null;
 
-    if (extensionId) {
-      const iconUrl =
-        typeof chrome !== "undefined"
-          ? `chrome-extension://${extensionId}/icons/icon-48.png`
-          : `moz-extension://${extensionId}/icons/icon-48.png`;
-      extensionIcon.src = iconUrl;
-    } else {
+    // Try to get extension ID and set icon URL
+    try {
+      const extensionId =
+        typeof chrome !== "undefined" && chrome.runtime
+          ? chrome.runtime.id
+          : typeof browser !== "undefined" && browser.runtime
+            ? browser.runtime.id
+            : null;
+
+      if (extensionId) {
+        const iconUrl =
+          typeof chrome !== "undefined"
+            ? `chrome-extension://${extensionId}/icons/icon-48.png`
+            : `moz-extension://${extensionId}/icons/icon-48.png`;
+
+        // Test if icon loads, fallback to emoji if not
+        extensionIcon.onerror = () => {
+          console.warn("Extension icon failed to load, using fallback");
+          extensionIcon.style.display = "none";
+          const fallbackDiv = document.createElement("div");
+          fallbackDiv.className = "figma-fallback-icon";
+          fallbackDiv.textContent = "🎨";
+          extensionIcon.parentElement.replaceChild(fallbackDiv, extensionIcon);
+        };
+
+        extensionIcon.src = iconUrl;
+      } else {
+        throw new Error("Extension ID not available");
+      }
+    } catch (error) {
+      console.warn("Could not load extension icon:", error);
       // Fallback to emoji if extension URL not available
       extensionIcon.style.display = "none";
       const fallbackDiv = document.createElement("div");

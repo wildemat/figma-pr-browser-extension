@@ -58,13 +58,13 @@
 
 .figma-token-modal h3 {
   margin: 0 0 12px 0;
-  color: #24292f;
+  color: #24292f !important;
   font-size: 18px;
 }
 
 .figma-token-modal p {
   margin: 0 0 20px 0;
-  color: #656d76;
+  color: #656d76 !important;
   line-height: 1.4;
 }
 
@@ -75,6 +75,12 @@
 .figma-token-modal .icon img {
   width: 48px;
   height: 48px;
+}
+
+.figma-fallback-icon {
+  font-size: 48px;
+  line-height: 1;
+  display: inline-block;
 }
 
 .figma-token-modal .buttons {

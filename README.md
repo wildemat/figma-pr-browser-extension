@@ -19,6 +19,23 @@ A browser extension that automatically processes Figma links in GitHub PR descri
 - ⭐ **Smart UI**: Button only appears when editing PR descriptions in Write mode
 - 🔒 **Secure Token Storage**: Safely stores Figma API tokens using browser storage APIs
 
+## Screenshots
+
+<div style="display: flex; gap: 24px; align-items: flex-start;">
+   <div style="text-align: center; width: 50vw; max-width: 100%;">
+      <kbd><img src="store-assets/screenshots/01-before-processing.png" alt="Before Processing" style="width: 50vw; max-width: 100%; height: auto;" /></kbd><br/>
+      <span style="font-size: 0.95em; color: #555;">Before Processing</span>
+   </div>
+   <div style="text-align: center; width: 50vw; max-width: 100%;">
+      <kbd><img src="store-assets/screenshots/02-after-processing.png" alt="After Processing" style="width: 50vw; max-width: 100%; height: auto;" /></kbd><br/>
+      <span style="font-size: 0.95em; color: #555;">After Processing</span>
+   </div>
+</div>
+
+### Extension Interface
+
+<kbd>![Extension Interface](store-assets/screenshots/interface.png)</kbd>
+
 ## Browser Support
 
 | Browser         | Status       | Built To         |
