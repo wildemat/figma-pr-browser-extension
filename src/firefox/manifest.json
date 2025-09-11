@@ -1,0 +1,62 @@
+{
+  "manifest_version": 2,
+  "name": "Figma PR Links",
+  "version": "1.0.1",
+  "description": "Automatically process Figma links in GitHub PR descriptions and generate design specs",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "figma-pr-links@wildmat.dev",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "https://github.com/*",
+    "https://api.figma.com/*",
+    "https://api.github.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://github.com/*/pull/*",
+        "https://github.com/*/compare/*"
+      ],
+      "js": [
+        "snarkdown.js",
+        "utils.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ]
+    }
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Figma PR Links",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "scripts": [
+      "debug.js",
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
