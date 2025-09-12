@@ -1,4 +1,4 @@
-# Figma PR Browser Extension
+# Figma PR Links Browser Extension
 
 <a href="https://chromewebstore.google.com/detail/figma-pr-links/dnbhgopianpdjjopidipefhhioijbncj" target="_blank" rel="noopener noreferrer" style="margin-right: 12px;">
    <img src="https://img.shields.io/badge/Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension" />
@@ -10,16 +10,16 @@
 > **⚠️ Status: Work in Progress**  
 > This extension is currently in development and requires further polish and performance improvements. While functional, you may encounter bugs or inconsistencies. Use with caution and expect regular updates.
 
-A browser extension that automatically processes Figma links in GitHub PR descriptions and generates interactive design specs with images, version tracking, and detailed metadata.
+A browser extension that automatically processes Figma links in GitHub PR descriptions and generates versioned, collapsible design specs with images and detailed metadata.
 
 🐙 **Also available as a [GitHub Action](https://github.com/wildemat/github-figma-action)**
 
 ## Features
 
+- 🔄 **Version Tracking**: Handles different versions of the same design node intelligently
 - 🎨 **Automatic Figma Link Processing**: Converts Figma design links into rich, interactive design specifications
 - 🖼️ **Design Previews**: Generates preview images for each Figma design node
 - 📝 **Detailed Specs**: Includes version information, timestamps, and design links
-- 🔄 **Version Tracking**: Handles different versions of the same design node intelligently
 - 🚫 **Duplicate Prevention**: Avoids creating duplicate specs for the same design+version
 - ⭐ **Smart UI**: Button only appears when editing PR descriptions in Write mode
 - 🔒 **Secure Token Storage**: Safely stores Figma API tokens using browser storage APIs
