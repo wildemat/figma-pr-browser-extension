@@ -1,6 +1,11 @@
 # Figma PR Browser Extension
 
-![Chrome](https://img.shields.io/badge/Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white) ![Firefox](https://img.shields.io/badge/Firefox-FF7139?style=for-the-badge&logo=firefox&logoColor=white)
+<a href="https://chromewebstore.google.com/detail/figma-pr-links/dnbhgopianpdjjopidipefhhioijbncj" target="_blank" rel="noopener noreferrer" style="margin-right: 12px;">
+   <img src="https://img.shields.io/badge/Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension" />
+</a>
+<a href="https://addons.mozilla.org/en-US/firefox/addon/figma-pr-links/" target="_blank" rel="noopener noreferrer">
+   <img src="https://img.shields.io/badge/Firefox%20Add--on-FF7139?style=for-the-badge&logo=firefox&logoColor=white" alt="Firefox Add-on" />
+</a>
 
 > **⚠️ Status: Work in Progress**  
 > This extension is currently in development and requires further polish and performance improvements. While functional, you may encounter bugs or inconsistencies. Use with caution and expect regular updates.
